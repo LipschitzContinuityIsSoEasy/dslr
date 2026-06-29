@@ -2,7 +2,8 @@
 import sys
 import csv
 
-def clean_and_save_data(file_train):
+# etape 1. stocker tous les donnees das dict_for_data
+def save_all_data(file_train):
     dict_for_data = {}
 
     with open(file_train, "r", encoding="utf-8") as file:
@@ -25,17 +26,25 @@ def clean_and_save_data(file_train):
                 # index de row et index de header en meme teps
                 header_name = header[index]
                 dict_for_data[header_name].append(element)
-        
-        # imprimer cette dict (premiers 3)
-        for k, v in list(dict_for_data.items())[:3]:
-            print(f"抽屉（表头）: {k} -> 里面的数据列表: {v[:5]} ... (共 {len(v)} 条)")
 
-
-    
     return dict_for_data
 
+# # etape 2. iterer cette dict, nettoyer et remplacer
+# def clean_dict_for_data(dict_for_data):
+#     cleaned_dict = {}
+
+#     # iterer un dict
+#     for cle, list_element in dict_for_data.items():
+
+
+#     return cleaned_dict
+
+def save_and_clean_data(file_train):
+    dict_for_data = save_all_data(file_train)
+    # cleaned_dict = clean_dict_for_data(dict_for_data)
+
 def describe(file_train):
-    dict_for_data = clean_and_save_data(file_train)
+    cleaned_dict = save_and_clean_data(file_train)
     # stats_result = calculate_statistics(dict_for_data)
     # display_statistics(stats_result)
     pass
