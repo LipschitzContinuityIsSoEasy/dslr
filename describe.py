@@ -1,9 +1,58 @@
 #!/usr/bin/env python3
 import sys
 import csv
+import math
 
+# stocker dans le double dict !!!
 def calculate_statistics(cleaned_dict):
+    # il y a petit dict pour 8 elements
     stats_result = {}
+
+    #  attention, iteration dans cleaned_dict
+    for cle, list_element in cleaned_dict.items():
+        # initialiser stats_result avec les cles de cleaned_dict
+        stats_result[cle] = {}
+
+        # calculer et stocker
+        count = len(list_element)
+        
+        mean = 0.0
+        if count > 0:
+            mean = sum(list_element) / float(count)
+        
+        std = 0.0
+        if count > 1:
+            variance_sum = sum((x - mean) ** 2 for x in list_element)
+
+            variance = variance_sum / (count - 1)
+
+            std = math.sqrt(variance)
+        
+        min_nb = float(list_element[0])
+        for nb in list_element:
+            if nb < min_nb:
+                min_nb = nb
+        
+        max_nb = float(list_element[0])
+        for nb in list_element:
+            if nb > max_nb:
+                max_nb = nb
+
+
+        # stocker dans le petit dict pour cette statistique
+        stats_result[cle]["Count"] = float(count)
+
+        stats_result[cle]["Mean"] = mean
+
+        stats_result[cle]["Std"] = std
+
+        stats_result[cle]["Min"] = float(min_nb)
+        
+        stats_result[cle]["Max"] = float(max_nb)
+
+
+        
+
     return stats_result
 
 # --------------------------------------------------------------------------------
