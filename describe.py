@@ -2,6 +2,11 @@
 import sys
 import csv
 
+def calculate_statistics(cleaned_dict):
+    stats_result = {}
+    return stats_result
+
+# --------------------------------------------------------------------------------
 # etape 1. stocker tous les donnees das dict_for_data
 def save_all_data(file_train):
     dict_for_data = {}
@@ -29,23 +34,44 @@ def save_all_data(file_train):
 
     return dict_for_data
 
-# # etape 2. iterer cette dict, nettoyer et remplacer
-# def clean_dict_for_data(dict_for_data):
-#     cleaned_dict = {}
+# etape 2. iterer cette dict, nettoyer et remplacer
+def clean_dict_for_data(dict_for_data):
+    cleaned_dict = {}
 
-#     # iterer un dict
-#     for cle, list_element in dict_for_data.items():
+    # iterer un dict
+    for cle, list_element in dict_for_data.items():
 
+        # sauter index
+        if cle == "Index":
+            continue
 
-#     return cleaned_dict
+        clean_list_for_cle = []
+
+        for element in list_element:
+            if element == "":
+                continue
+            try:
+                nb = float(element)
+                clean_list_for_cle.append(nb)
+            except ValueError:
+                pass
+        
+        # panduan
+        if len(clean_list_for_cle) > 0:
+            cleaned_dict[cle] = clean_list_for_cle
+
+    return cleaned_dict
 
 def save_and_clean_data(file_train):
     dict_for_data = save_all_data(file_train)
-    # cleaned_dict = clean_dict_for_data(dict_for_data)
+    cleaned_dict = clean_dict_for_data(dict_for_data)
+    return cleaned_dict
+
+# --------------------------------------------------------------------------------
 
 def describe(file_train):
     cleaned_dict = save_and_clean_data(file_train)
-    # stats_result = calculate_statistics(dict_for_data)
+    stats_result = calculate_statistics(cleaned_dict)
     # display_statistics(stats_result)
     pass
 
