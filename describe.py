@@ -3,6 +3,25 @@ import sys
 import csv
 import math
 
+# fonction utils
+def get_percentile(sorted_list, q):
+    # q peut etre 0.25 0.5 0.75 0 1
+    n_total = len(sorted_list)
+
+    # calculer la position
+    k = (n_total - 1) * q
+    f = math.floor(k)
+    c = math.ceil(k)
+
+    # si l'index est un entier
+    if f == c:
+        return float(sorted_list[int(k)])
+    
+    # sinon
+    d0 = sorted_list[int(f)] * (c - k)
+    d1 = sorted_list[int(c)] * (k - f)
+    return float(d0 + d1)
+
 # stocker dans le double dict !!!
 def calculate_statistics(cleaned_dict):
     # il y a petit dict pour 8 elements
@@ -28,15 +47,24 @@ def calculate_statistics(cleaned_dict):
 
             std = math.sqrt(variance)
         
-        min_nb = float(list_element[0])
-        for nb in list_element:
-            if nb < min_nb:
-                min_nb = nb
+        # min_nb = float(list_element[0])
+        # for nb in list_element:
+        #     if nb < min_nb:
+        #         min_nb = nb
         
-        max_nb = float(list_element[0])
-        for nb in list_element:
-            if nb > max_nb:
-                max_nb = nb
+        # max_nb = float(list_element[0])
+        # for nb in list_element:
+        #     if nb > max_nb:
+        #         max_nb = nb
+
+        # sort pour min max 25% etc
+        sorted_list = sorted(list_element)
+        min_nb = float(sorted_list[0])
+        max_nb = float(sorted_list[-1])
+
+        q25 = get_percentile(sorted_list, 0.25)
+        q50 = get_percentile(sorted_list, 0.5)
+        q75 = get_percentile(sorted_list, 0.75)
 
 
         # stocker dans le petit dict pour cette statistique
@@ -47,6 +75,12 @@ def calculate_statistics(cleaned_dict):
         stats_result[cle]["Std"] = std
 
         stats_result[cle]["Min"] = float(min_nb)
+
+        stats_result[cle]["25%"] = q25
+
+        stats_result[cle]["50%"] = q50
+
+        stats_result[cle]["75%"] = q75
         
         stats_result[cle]["Max"] = float(max_nb)
 
