@@ -4,6 +4,10 @@ import csv
 import math
 
 # fonction utils
+# ici q est le poids de B (0.75)
+# (1 - q) est le poids de A automatiquement(0.25)
+# d0 = A * (1 - q)
+# d1 = B * q
 def get_percentile(sorted_list, q):
     # q peut etre 0.25 0.5 0.75 0 1
     n_total = len(sorted_list)
@@ -24,7 +28,7 @@ def get_percentile(sorted_list, q):
 
 # stocker dans le double dict !!!
 def calculate_statistics(cleaned_dict):
-    # il y a petit dict pour 8 elements
+    # un grand dict stocke resultat
     stats_result = {}
 
     #  attention, iteration dans cleaned_dict
@@ -90,7 +94,7 @@ def calculate_statistics(cleaned_dict):
     return stats_result
 
 # --------------------------------------------------------------------------------
-# etape 1. stocker tous les donnees das dict_for_data
+# etape 1. stocker tous les donnees dans dict_for_data
 def save_all_data(file_train):
     dict_for_data = {}
 
@@ -152,10 +156,24 @@ def save_and_clean_data(file_train):
 
 # --------------------------------------------------------------------------------
 
+def display_statistics(stats_result):
+    # header
+    # header = "Feature".ljust(15) + "Count".rjust(10) + "Mean".rjust(12) + "Std".rjust(12) + "Min".rjust(12) + "25%".rjust(12) + "50%".rjust(12) + "75%".rjust(12) + "Max".rjust(12)
+    # print(header)
+    # print("-" * len(header))
+
+    # 1. stocker tous les features(les clefs de cleaned_dict == stats_result)
+    features = list(stats_result.key())
+
+    # 2. definir la liste que je veux imprimer
+
+
+    # chaque ligne
+
 def describe(file_train):
     cleaned_dict = save_and_clean_data(file_train)
     stats_result = calculate_statistics(cleaned_dict)
-    # display_statistics(stats_result)
+    display_statistics(stats_result)
     pass
 
 def main():
