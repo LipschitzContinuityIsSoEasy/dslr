@@ -51,16 +51,6 @@ def calculate_statistics(cleaned_dict):
 
             std = math.sqrt(variance)
         
-        # min_nb = float(list_element[0])
-        # for nb in list_element:
-        #     if nb < min_nb:
-        #         min_nb = nb
-        
-        # max_nb = float(list_element[0])
-        # for nb in list_element:
-        #     if nb > max_nb:
-        #         max_nb = nb
-
         # sort pour min max 25% etc
         sorted_list = sorted(list_element)
         min_nb = float(sorted_list[0])
@@ -88,8 +78,6 @@ def calculate_statistics(cleaned_dict):
         
         stats_result[cle]["Max"] = float(max_nb)
 
-
-        
 
     return stats_result
 
@@ -125,6 +113,8 @@ def save_all_data(file_train):
 def clean_dict_for_data(dict_for_data):
     cleaned_dict = {}
 
+    missing_value_set = {"nan", "na", "null", "none", ""}
+
     # iterer un dict
     for cle, list_element in dict_for_data.items():
 
@@ -133,18 +123,26 @@ def clean_dict_for_data(dict_for_data):
             continue
 
         clean_list_for_cle = []
+        is_column_valid = True
 
         for element in list_element:
-            if element == "":
+            # 1. convertir en miniscule et enlever les espaces
+            val_str = str(element).strip().lower()
+
+            # 2. si c'est autorise
+            if val_str in missing_value_set:
                 continue
+            # 3. essayer de convertir en chiffre
             try:
                 nb = float(element)
                 clean_list_for_cle.append(nb)
             except ValueError:
-                pass
+                # 4. si c'est pas autorise ou non chiffre
+                is_column_valid = False
+                break
         
         # panduan
-        if len(clean_list_for_cle) > 0:
+        if is_column_valid and len(clean_list_for_cle) > 0:
             cleaned_dict[cle] = clean_list_for_cle
 
     return cleaned_dict
@@ -157,18 +155,49 @@ def save_and_clean_data(file_train):
 # --------------------------------------------------------------------------------
 
 def display_statistics(stats_result):
+    # print(f"DEBUG: 我手里一共存了 {len(stats_result)} 个特征的统计信息")
+    # # 打印所有特征的名字（大字典的键）
+    # print("所有的 Feature 名字有：", list(stats_result.keys()))
+
+    # first_feature_stats = list(stats_result.values())[0]
+    # print(f"DEBUG: 它们的统计项包括: {list(first_feature_stats.keys())}")
+    
+    # first_cle = next(iter(stats_result))
+    # print(f"第一个键是: {first_cle}")
+    # print(f"它里面的内容是: {stats_result[first_cle]}")
+
     # header
-    # header = "Feature".ljust(15) + "Count".rjust(10) + "Mean".rjust(12) + "Std".rjust(12) + "Min".rjust(12) + "25%".rjust(12) + "50%".rjust(12) + "75%".rjust(12) + "Max".rjust(12)
-    # print(header)
-    # print("-" * len(header))
 
     # 1. stocker tous les features(les clefs de cleaned_dict == stats_result)
-    features = list(stats_result.key())
+    # comme `Arithmancy`, `Astronomy` ...
+    features = list(stats_result.keys())
 
-    # 2. definir la liste que je veux imprimer
+    # 2. stocker les indicateurs comme `Count`, `Mean` ...
+    metrics = list(list(stats_result.values())[0].keys())
 
+    # 3. imprimer header
+    header = "".ljust(10)
+    for _ in features:
+        header += _[:10].rjust(12)
+    print(header)
+    print("-" * len(header))
 
-    # chaque ligne
+    # 4. d'abord boucle exterieur(indicateurs)
+    # ils decident au'on impriment combien de lignes
+    for stat_name in metrics:
+
+        # d'abord imprimer le nom de cet indicateur
+        row_str = f"{stat_name:<12}"
+
+        # puis boucle interieur(feature pour chaque indicateur)
+        for feature_name in features:
+            val = stats_result[feature_name][stat_name]
+
+            # format float, 6 apres le virgule
+            row_str += f"{val:>15.6f}" if isinstance(val, float) else f"{val:>15}"
+        
+        print(row_str)
+
 
 def describe(file_train):
     cleaned_dict = save_and_clean_data(file_train)
