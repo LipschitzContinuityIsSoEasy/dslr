@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 def histogram(file_name):
     #  1. lire et stocker
     try:
+        # abs_file_path = os.path.abspath(file_name)
         all_data = pd.read_csv(file_name)
     except FileNotFoundError:
         print(f"Erreur : Le fichier '{file_name}' est introuvable.")
@@ -36,7 +37,14 @@ def histogram(file_name):
         return
 
     # creer les repertoires!
-    os.makedirs("visualisations/hist", exist_ok=True)
+    # chemin absolu
+    # os.makedirs("outputs/figures", exist_ok=True)
+    # obtenir lui-meme d'abord
+    current_script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_script_dir)
+    output_dir = os.path.join(project_root, "outputs", "hist")
+    os.makedirs(output_dir, exist_ok=True)
+
 
     # 3. boucle pour chaque cours et dessiner
     for col in course_cols:
@@ -63,7 +71,8 @@ def histogram(file_name):
             plt.ylabel("Count", fontsize=12)
 
             # 4. sauvegarder en images
-            output_filename = f"visualisations/hist/{col.replace(' ', '_')}_hist.png"
+            safe_col_name = col.replace(' ', '_').replace('/', '_')
+            output_filename = os.path.join(output_dir, f"{safe_col_name}_hist.png")
             plt.savefig(output_filename)
 
             # close et free, dessiner le cours suivant
