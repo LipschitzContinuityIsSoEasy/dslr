@@ -6,6 +6,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from sklearn.feature_selection import f_classif
+
 def pair_plot(file_name):
     #  1. lire et stocker
     try:
@@ -58,6 +60,31 @@ def pair_plot(file_name):
     print(f"Sauvegarde: {output_path}")
 
     # plt.show()
+
+    # pour f-score
+    clean_data = all_data[course_cols + ['Hogwarts House']].dropna()
+
+    X = clean_data[course_cols]
+    y = clean_data['Hogwarts House']
+
+    # 4. 计算每一门课的 F 值 (F-score) 和 P 值
+    f_values, p_values = f_classif(X, y)
+
+    # 5. 打包成 DataFrame 并按 F 值从大到小排序
+    feature_ranking = pd.DataFrame({
+        'Feature': course_cols,
+        'F_Value': f_values,
+        'P_Value': p_values
+    }).sort_values(by='F_Value', ascending=False).reset_index(drop=True)
+
+    print("--- 课程区分学院能力排行榜（F-score 越高，分类效果越好） ---")
+    print(feature_ranking.to_string(index=False))
+
+    # 6. 顺便自动挑出 F 值最高的前 5 个特征，方便你直接复制到逻辑回归里
+    top_k = 5
+    best_features = feature_ranking['Feature'].head(top_k).tolist()
+    print(f"\n建议在逻辑回归中使用的前 {top_k} 个特征:")
+    print(best_features)
 
 def main():
     args = sys.argv
