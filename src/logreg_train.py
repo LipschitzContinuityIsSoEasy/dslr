@@ -48,23 +48,23 @@ def logreg_train(file_name):
     X = clean_data[course_cols]
     y = clean_data['Hogwarts House']
 
-    # 4. 计算每一门课的 F 值 (F-score) 和 P 值
+    # 4. Calculer la valeur F (F-score) et la valeur P pour chaque cours
     f_values, p_values = f_classif(X, y)
 
-    # 5. 打包成 DataFrame 并按 F 值从大到小排序
+    # 5. Regrouper dans un DataFrame et trier par valeur F décroissante
     feature_ranking = pd.DataFrame({
         'Feature': course_cols,
         'F_Value': f_values,
         'P_Value': p_values
     }).sort_values(by='F_Value', ascending=False).reset_index(drop=True)
 
-    print("--- 课程区分学院能力排行榜（F-score 越高，分类效果越好） ---")
+    print("--- Classement des cours selon leur capacité à différencier les maisons (plus le F-score est élevé, meilleur est le résultat de classification) ---")
     print(feature_ranking.to_string(index=False))
 
-    # 6. 顺便自动挑出 F 值最高的前 10 个特征，方便你直接复制到逻辑回归里
+    # 6. Sélectionner automatiquement les 10 meilleures caractéristiques avec le F-score le plus élevé pour les utiliser dans la régression logistique
     top_k = 10
     best_features = feature_ranking['Feature'].head(top_k).tolist()
-    print(f"\n建议在逻辑回归中使用的前 {top_k} 个特征:")
+    print(f"\nCaractéristiques recommandées pour la régression logistique (top {top_k}) :")
     print(best_features)
 
     # creer les repertoires!
