@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_selection import f_classif
 
-def logreg_train(file_name):
+def load_and_preprocess_data(file_name):
     #  1. lire et stocker
     try:
         # abs_file_path = os.path.abspath(file_name)
@@ -38,11 +38,7 @@ def logreg_train(file_name):
         print("Avertissement : Aucune colonne numérique valide n'a été trouvée pour les cours.")
         return
 
-    # ajouter House dans course, faciliter seaborn
-    features_to_plot = course_cols + ['Hogwarts House']
-    plot_data = all_data[features_to_plot].dropna()
-
-    # pour f-score
+    # netoyyer tous les NaN
     clean_data = all_data[course_cols + ['Hogwarts House']].dropna()
 
     X = clean_data[course_cols]
@@ -67,31 +63,37 @@ def logreg_train(file_name):
     print(f"\nCaractéristiques recommandées pour la régression logistique (top {top_k}) :")
     print(best_features)
 
-    # creer les repertoires!
-    # chemin absolu
-    # os.makedirs("outputs/figures", exist_ok=True)
-    # obtenir lui-meme d'abord
-    # current_script_dir = os.path.dirname(os.path.abspath(__file__))
-    # project_root = os.path.dirname(current_script_dir)
-    # output_dir = os.path.join(project_root, "outputs", "plot")
-    # os.makedirs(output_dir, exist_ok=True)
+    # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
+    return clean_data[best_features + ['Hogwarts House']], best_features
 
-    # output_path = os.path.join(output_dir, "pair_plot.png")
-    # plt.savefig(output_path, dpi=300)
-    # print(f"Sauvegarde: {output_path}")
+def logreg_train(file_name):
+    # 1. faire 1 et 2
+    cleaned_data = load_and_preprocess_data(file_name)
 
-    # plt.show()
+    # 2. faire 3 normalisation
+    # normalized_data = normalize_data(cleaned_data)
 
+    # 3. boucle et aussi stocker dans un fichier a la fin
+    # train_all_houses(normalized_data)
 
+# 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
+# 2. F-score, choisir les premieres 10
+# 3. normaliser tous ces premieres 10 caracteristiques
+# 4. une boucle pour les 4 maisons
+#     chaque fois est 1, les autres sont 0, faire 30 000 iterations
+#     obtenir 10 w et 1 biais
+#     je definit hyperparametres Learning-rate et nb d'iterations
+# 5. stocker dans un fichier
 def main():
     args = sys.argv
-    if len(args) < 2:
-        print("Usage: ./logreg_train.py <datasets/dataset_train.csv>")
+
+    if len(args) != 2:
+        print("Usage: ./logreg_train.py datasets/dataset_train.csv")
         exit(1)
 
-    if (args[1] != "datasets/dataset_train.csv"):
-        print("Usage: ./logreg_train.py <datasets/dataset_train.csv>")
-        exit(1)
+    # if (args[1] != "datasets/dataset_train.csv"):
+    #     print("Usage: ./logreg_train.py datasets/dataset_train.csv")
+    #     exit(1)
 
     file_name = args[1]
 
