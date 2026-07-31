@@ -38,7 +38,7 @@ def load_and_preprocess_data(file_name):
         print("Avertissement : Aucune colonne numérique valide n'a été trouvée pour les cours.")
         return
 
-    # netoyyer tous les NaN
+    # netoyyer tous les NaN/None
     clean_data = all_data[course_cols + ['Hogwarts House']].dropna()
 
     X = clean_data[course_cols]
@@ -66,15 +66,38 @@ def load_and_preprocess_data(file_name):
     # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
     return clean_data[best_features + ['Hogwarts House']], best_features
 
+def normalize_data(cleaned_data):
+    # 1. copier et coller
+    normalized_copie = cleaned_data.copy()
+
+    # 2. supprimer les houses
+    houses = normalized_copie.pop('Hogwarts House')
+
+    # 3. juste les premiere 10 caracteristiques
+    for col in normalized_copie.columns:
+        mean_val = normalized_copie[col].mean()
+        std_val = normalized_copie[col].std()
+
+        if std_val != 0:
+            normalized_copie[col] = (normalized_copie[col] - mean_val) / std_val
+        else:
+            normalized_copie[col] = 0.0
+
+    # 4. rajouter les houses
+    normalized_copie['Hogwarts House'] = houses
+
+
 def logreg_train(file_name):
     # 1. faire 1 et 2
-    cleaned_data = load_and_preprocess_data(file_name)
+    cleaned_data, best_features = load_and_preprocess_data(file_name)
 
     # 2. faire 3 normalisation
-    # normalized_data = normalize_data(cleaned_data)
+    # =====================================================================================================================================================
+    # attention: ici on utilise Z-score(x-niu)/sigma, pas (x-min)/(max-min)
+    normalized_data = normalize_data(cleaned_data)
 
     # 3. boucle et aussi stocker dans un fichier a la fin
-    # train_all_houses(normalized_data)
+    # train_all_houses(normalized_data, best_features)
 
 # 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
 # 2. F-score, choisir les premieres 10
