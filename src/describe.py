@@ -173,18 +173,17 @@ def save_and_display_statistics(stats_result):
     three_dimention_dict = {
         "statistics": stats_result
     }
+
     try:
         with open(save_in_file, "w") as datafile:
-            json.dump(three_dimention_dict, datafile)
-    except FileNotFoundError:
-        print(f"Erreur : Le fichier '{save_in_file}' est introuvable.")
-        exit(1)
-    except pd.errors.EmptyDataError:
-        print(f"Erreur : Le fichier '{save_in_file}' est vide.")
+            json.dump(three_dimention_dict, datafile, indent=4)
+    except PermissionError:
+        print(f"Erreur : Le fichier '{save_in_file}' permission denied")
         exit(1)
     except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
+        print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
         exit(1)
+
     # 1. stocker tous les features(les clefs de cleaned_dict == stats_result)
     # comme `Arithmancy`, `Astronomy` ...
     features = list(stats_result.keys())

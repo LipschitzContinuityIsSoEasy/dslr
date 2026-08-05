@@ -7,6 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import math
 import csv
+import json
 
 from sklearn.feature_selection import f_classif
 
@@ -168,9 +169,32 @@ def save_weights_to_csv(all_parameters, filename):
         print(f"Erreur lors de l'écriture du CSV : {e}")
         exit(1)
 
+# def save_weights_to_json(all_parameters, filename_json):
+
+#     three_dimention_dict = {
+#         "weights" : all_parameters
+#     }
+#     try:
+#         with open(filename_json, "r") as f:
+#             model_data = json.load(f)
+#     except FileNotFoundError:
+#             model_data = {}
+#             json.dump(three_dimention_dict, datafile, indent=4)        
+#         print(f"Poids sauvegardés avec succès dans {filename_json} !")
+#     except PermissionError:
+#         print(f"Erreur : Le fichier '{filename_json}' permission denied")
+#         exit(1)
+#     except Exception as e:
+#         print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
+#         exit(1)
+#     except IOError as e:
+#         print(f"Erreur lors de l'écriture du CSV : {e}")
+#         exit(1)
+
 def train_all_houses(normalized_data, best_features, learning_rate):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
-    filename="weights.csv"
+    # filename="weights.csv"
+    filename_json="model_params.json"
 
     all_parametres = {}
 
@@ -180,8 +204,8 @@ def train_all_houses(normalized_data, best_features, learning_rate):
 
         all_parametres[house] = {'weights': weights, 'bias': bias}
 
-    # ecrire dans un csv
-    save_weights_to_csv(all_parametres, filename)
+    # ecrire dans un json
+    save_weights_to_json(all_parametres, filename_json)
     print("Tous les modèles sont entraînés avec succès !")
     return all_parametres
 
