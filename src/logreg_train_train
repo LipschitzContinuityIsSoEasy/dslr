@@ -92,57 +92,51 @@ def normalize_data(cleaned_data, best_features):
 
 # OvR (One-vs-All)
 def train_single_house(normalized_data, best_features, target_house, learning_rate):
-    # 1. ici on utilsie batch gradient descent(BGD)
-    m = len(normalized_data)
+    m = len(normalize_data)
     num_features = len(best_features)
 
-    # initialiser tous en 0
+    # initialiser les weights et le bias
     weights = [0.0] * num_features
     bias = 0.0
 
-    for _ in range(300):
+    for _ in range(30000):
         # Batch Gradient Descent (BGD)
         # La Descente de Gradient par Lot
 
-        # initialiser les accumulateurs
+        # initialiser les errors
         sum_error_weights = [0.0] * num_features
         sum_error_bias = 0.0
 
-        # # stocker l'érreur carrée totale pour cet itération
-        # current_sum_mse = 0.0
-
         for i in range(m):
-            # 0. obtenir les donnees d'un eleve en i-eme ligne
-            row = normalized_data.iloc[i]
+            row = normalize_data.iloc[i]
 
-            # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
+
+            # calculer z
             z = bias
             for j in range(num_features):
                 feature_name = best_features[j]
                 z += weights[j] * row[feature_name]
 
-            # 2. remplacer dans Sigmoid pour avoir le resultat
-            prediction = 1.0 / (1.0 + math.exp(-z))
+            #  calculer prediction
+            prediction = (1.0) / (1.0 + math.exp(-z))
 
-            # 3. savoir le vrai label y pour l'eleve actuel (0 ou 1)
             real_house = row['Hogwarts House']
             y = 0.0
             if (real_house == target_house):
                 y = 1.0
 
-            # 4. calculer l'error
             error = prediction - y
 
-            # 5. accumuler les gradients
             sum_error_bias += error
             for j in range(num_features):
                 feature_name = best_features[j]
                 sum_error_weights[j] += error * row[feature_name]
 
-        # 6. apres une boucle, renouveler tout en meme temps
+        # renouvler en meme temps
         bias = bias - (learning_rate * (1/m) * sum_error_bias)
         for j in range(num_features):
-            weights[j] = weights[j] - (learning_rate * (1 / m) * sum_error_weights[j])
+            # feature_name = best_features[j]
+            weights[j] = weights[j] - (learning_rate * (1/m) * sum_error_weights[j])
 
     return weights, bias
 

@@ -2,6 +2,7 @@
 import sys
 import csv
 import math
+import json
 
 # fonction utils
 # ici q est le poids de B (0.75)
@@ -154,7 +155,8 @@ def save_and_clean_data(file_train):
 
 # --------------------------------------------------------------------------------
 
-def display_statistics(stats_result):
+# ici il faut stocker dans un fichier csv ou json, j'ai choisi json pour la suite
+def save_and_display_statistics(stats_result):
     # print(f"DEBUG: 我手里一共存了 {len(stats_result)} 个特征的统计信息")
     # # 打印所有特征的名字（大字典的键）
     # print("所有的 Feature 名字有：", list(stats_result.keys()))
@@ -166,8 +168,23 @@ def display_statistics(stats_result):
     # print(f"第一个键是: {first_cle}")
     # print(f"它里面的内容是: {stats_result[first_cle]}")
 
-    # header
-
+    # ouvrir un json
+    save_in_file = "model_params.json"
+    three_dimention_dict = {
+        "statistics": stats_result
+    }
+    try:
+        with open(save_in_file, "w") as datafile:
+            json.dump(three_dimention_dict, datafile)
+    except FileNotFoundError:
+        print(f"Erreur : Le fichier '{save_in_file}' est introuvable.")
+        exit(1)
+    except pd.errors.EmptyDataError:
+        print(f"Erreur : Le fichier '{save_in_file}' est vide.")
+        exit(1)
+    except Exception as e:
+        print(f"Erreur lors de la lecture du fichier CSV : {e}")
+        exit(1)
     # 1. stocker tous les features(les clefs de cleaned_dict == stats_result)
     # comme `Arithmancy`, `Astronomy` ...
     features = list(stats_result.keys())
@@ -198,12 +215,10 @@ def display_statistics(stats_result):
         
         print(row_str)
 
-
 def describe(file_train):
     cleaned_dict = save_and_clean_data(file_train)
     stats_result = calculate_statistics(cleaned_dict)
-    display_statistics(stats_result)
-    pass
+    save_and_display_statistics(stats_result)
 
 def main():
 # etape: 1. creer un dictionaire {"colon1": [chiffre_1, chiffre_2], ..., "colon2":[chiffre1, chiffre2...], ...}
