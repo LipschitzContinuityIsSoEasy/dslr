@@ -41,8 +41,17 @@ def load_and_preprocess_data(file_name):
         print("Avertissement : Aucune colonne numérique valide n'a été trouvée pour les cours.")
         return
 
-    # netoyyer tous les NaN/None
-    clean_data = all_data[course_cols + ['Hogwarts House']].dropna()
+    # 0.1 d'abord calculer mean
+    train_means = {}
+
+    for col in course_cols:
+        mean_val = all_data[col].mean()
+        train_means[col] = mean_val
+        # 0.2 remplire avec 
+        all_data[col] = all_data[col].fillna(mean_val)
+
+    # non : netoyyer tous les NaN/None
+    clean_data = all_data[course_cols + ['Hogwarts House']].dropna(subset=['Hogwarts House'])
 
     X = clean_data[course_cols]
     y = clean_data['Hogwarts House']
@@ -67,7 +76,7 @@ def load_and_preprocess_data(file_name):
     print(best_features)
 
     # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
-    return clean_data[best_features + ['Hogwarts House']], best_features
+    return clean_data[best_features + ['Hogwarts House']], best_features, train_means
 
 def normalize_data(cleaned_data, best_features):
     # 1. copier et coller
@@ -169,16 +178,19 @@ def save_weights_to_csv(all_parameters, filename):
         print(f"Erreur lors de l'écriture du CSV : {e}")
         exit(1)
 
-def save_weights_to_json(all_parameters, filename_json):
+def save_weights_to_json(all_parameters, train_means, filename_json):
 
-    three_dimention_dict = {
+
+    model_data = {
+        "means" : train_means,
         "weights" : all_parameters
     }
+
     try:
         # d'abord stocker les donnees dans le fichier
         with open(filename_json, "w") as f:
-            json.dump(three_dimention_dict, f, indent=4)
-            print(f"Poids sauvegardés avec succès dans {filename_json} !")
+            json.dump(model_data, f, indent=4)
+            print(f"Poids et means sauvegardés avec succès dans {filename_json} !")
     except FileNotFoundError:       
         print(f"Erreur : Le fichier '{filename_json}' not found")
         exit(1)
@@ -193,10 +205,10 @@ def save_weights_to_json(all_parameters, filename_json):
         exit(1)
     
 
-def train_all_houses(normalized_data, best_features, learning_rate):
+def train_all_houses(normalized_data, best_features, learning_rate, train_means):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"
-    filename_json="weights.json"
+    filename_json="model_params.json"
 
     all_parametres = {}
 
@@ -207,13 +219,13 @@ def train_all_houses(normalized_data, best_features, learning_rate):
         all_parametres[house] = {'weights': weights, 'bias': bias}
 
     # ecrire dans un json
-    save_weights_to_json(all_parametres, filename_json)
+    save_weights_to_json(all_parametres, train_means, filename_json)
     print("Tous les modèles sont entraînés avec succès !")
     return all_parametres
 
 def logreg_train(file_name):
     # 1. faire 1 et 2
-    cleaned_data, best_features = load_and_preprocess_data(file_name)
+    cleaned_data, best_features, train_means = load_and_preprocess_data(file_name)
 
     # 2. faire 3 normalisation
     # =====================================================================================================================================================
@@ -223,7 +235,7 @@ def logreg_train(file_name):
     learning_rate = 0.1
 
     # 3. boucle et aussi stocker dans un fichier a la fin
-    train_all_houses(normalized_data, best_features, learning_rate)
+    train_all_houses(normalized_data, best_features, learning_rate, train_means)
 
 # 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
 # 2. F-score, choisir les premieres 10
