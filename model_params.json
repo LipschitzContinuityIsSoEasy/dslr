@@ -26,6 +26,18 @@
         "Charms": -243.3744090125,
         "Flying": 21.9580125
     },
+    "train_stds": {
+        "Charms": 8.783639876017117,
+        "Defense Against the Dark Arts": 5.162015873475544,
+        "Astronomy": 515.0657196248314,
+        "Ancient Runes": 105.11550760219578,
+        "Divination": 4.104313679917073,
+        "Flying": 97.63160206806158,
+        "Herbology": 5.16553955657155,
+        "Transfiguration": 43.653472666327566,
+        "Muggle Studies": 480.9926662154275,
+        "History of Magic": 4.3658605718039025
+    },
     "weights": {
         "Gryffindor": {
             "weights": [

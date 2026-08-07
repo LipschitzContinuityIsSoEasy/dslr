@@ -75,8 +75,18 @@ def load_and_preprocess_data(file_name):
     print(f"\nCaractéristiques recommandées pour la régression logistique (top {top_k}) :")
     print(best_features)
 
+    # ===========================================================================================================================================================================
+    # ici calculer stds
+    train_stds = {}
+
+    for col in best_features:
+        std_val = clean_data[col].std()
+        if std_val == 0:
+            std_val = 1.0
+        train_stds[col] = std_val
+
     # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
-    return clean_data[best_features + ['Hogwarts House']], best_features, train_means
+    return clean_data[best_features + ['Hogwarts House']], best_features, train_means, train_stds
 
 def normalize_data(cleaned_data, best_features):
     # 1. copier et coller
@@ -198,7 +208,7 @@ def save_all_to_json(all_model_data, filename_json):
         exit(1)
     
 
-def train_all_houses(normalized_data, best_features, learning_rate, train_means):
+def train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"
     filename_json="model_params.json"
@@ -214,8 +224,8 @@ def train_all_houses(normalized_data, best_features, learning_rate, train_means)
     all_model_data = {
         "best_features" : best_features,
         "train_means" : train_means,
+        "train_stds" : train_stds,
         "weights" : weights_bias
-
     }
     # ecrire dans un json
     save_all_to_json(all_model_data, filename_json)
@@ -223,7 +233,7 @@ def train_all_houses(normalized_data, best_features, learning_rate, train_means)
 
 def logreg_train(file_name):
     # 1. faire 1 et 2
-    cleaned_data, best_features, train_means = load_and_preprocess_data(file_name)
+    cleaned_data, best_features, train_means , train_stds= load_and_preprocess_data(file_name)
 
     # 2. faire 3 normalisation
     # =====================================================================================================================================================
@@ -233,7 +243,7 @@ def logreg_train(file_name):
     learning_rate = 0.1
 
     # 3. boucle et aussi stocker dans un fichier a la fin
-    train_all_houses(normalized_data, best_features, learning_rate, train_means)
+    train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds)
 
 # 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
 # 2. F-score, choisir les premieres 10
