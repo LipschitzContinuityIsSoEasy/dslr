@@ -169,32 +169,34 @@ def save_weights_to_csv(all_parameters, filename):
         print(f"Erreur lors de l'écriture du CSV : {e}")
         exit(1)
 
-# def save_weights_to_json(all_parameters, filename_json):
+def save_weights_to_json(all_parameters, filename_json):
 
-#     three_dimention_dict = {
-#         "weights" : all_parameters
-#     }
-#     try:
-#         with open(filename_json, "r") as f:
-#             model_data = json.load(f)
-#     except FileNotFoundError:
-#             model_data = {}
-#             json.dump(three_dimention_dict, datafile, indent=4)        
-#         print(f"Poids sauvegardés avec succès dans {filename_json} !")
-#     except PermissionError:
-#         print(f"Erreur : Le fichier '{filename_json}' permission denied")
-#         exit(1)
-#     except Exception as e:
-#         print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
-#         exit(1)
-#     except IOError as e:
-#         print(f"Erreur lors de l'écriture du CSV : {e}")
-#         exit(1)
+    three_dimention_dict = {
+        "weights" : all_parameters
+    }
+    try:
+        # d'abord stocker les donnees dans le fichier
+        with open(filename_json, "w") as f:
+            json.dump(three_dimention_dict, f, indent=4)
+            print(f"Poids sauvegardés avec succès dans {filename_json} !")
+    except FileNotFoundError:       
+        print(f"Erreur : Le fichier '{filename_json}' not found")
+        exit(1)
+    except PermissionError:
+        print(f"Erreur : Le fichier '{filename_json}' permission denied")
+        exit(1)
+    except Exception as e:
+        print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
+        exit(1)
+    except IOError as e:
+        print(f"Erreur lors de l'écriture du CSV : {e}")
+        exit(1)
+    
 
 def train_all_houses(normalized_data, best_features, learning_rate):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"
-    filename_json="model_params.json"
+    filename_json="weights.json"
 
     all_parametres = {}
 
