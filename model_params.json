@@ -1,5 +1,17 @@
 {
-    "means": {
+    "best_features": [
+        "Charms",
+        "Defense Against the Dark Arts",
+        "Astronomy",
+        "Ancient Runes",
+        "Divination",
+        "Flying",
+        "Herbology",
+        "Transfiguration",
+        "Muggle Studies",
+        "History of Magic"
+    ],
+    "train_means": {
         "Arithmancy": 49634.57024265645,
         "Astronomy": 39.79713089016475,
         "Herbology": 1.1410195296768046,

@@ -178,19 +178,12 @@ def save_weights_to_csv(all_parameters, filename):
         print(f"Erreur lors de l'écriture du CSV : {e}")
         exit(1)
 
-def save_weights_to_json(all_parameters, train_means, filename_json):
-
-
-    model_data = {
-        "means" : train_means,
-        "weights" : all_parameters
-    }
-
+def save_all_to_json(all_model_data, filename_json):
     try:
         # d'abord stocker les donnees dans le fichier
         with open(filename_json, "w") as f:
-            json.dump(model_data, f, indent=4)
-            print(f"Poids et means sauvegardés avec succès dans {filename_json} !")
+            json.dump(all_model_data, f, indent=4)
+            print(f"Modèle complet (features, means, weights) sauvegardé avec succès dans '{filename_json}' !")
     except FileNotFoundError:       
         print(f"Erreur : Le fichier '{filename_json}' not found")
         exit(1)
@@ -210,18 +203,23 @@ def train_all_houses(normalized_data, best_features, learning_rate, train_means)
     # filename="weights.csv"
     filename_json="model_params.json"
 
-    all_parametres = {}
+    weights_bias = {}
 
     for house in houses:
         print(f"Entraînement du modèle pour : {house}...")
         weights, bias = train_single_house(normalized_data, best_features, house, learning_rate)
 
-        all_parametres[house] = {'weights': weights, 'bias': bias}
+        weights_bias[house] = {'weights': weights, 'bias': bias}
 
+    all_model_data = {
+        "best_features" : best_features,
+        "train_means" : train_means,
+        "weights" : weights_bias
+
+    }
     # ecrire dans un json
-    save_weights_to_json(all_parametres, train_means, filename_json)
+    save_all_to_json(all_model_data, filename_json)
     print("Tous les modèles sont entraînés avec succès !")
-    return all_parametres
 
 def logreg_train(file_name):
     # 1. faire 1 et 2

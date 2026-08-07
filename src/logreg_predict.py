@@ -10,6 +10,9 @@ import csv
 
 from sklearn.feature_selection import f_classif
 
+# juste lire model pramametresjson 1 fois et stocker dans un data
+# etape:
+# 1. lire test.csv et stocker 
 def load_test_set(filename):
     try:
         all_test_set = pd.read_csv(filename)
@@ -28,7 +31,7 @@ def load_test_set(filename):
         col for col in all_test_set.columns
         if pd.api.types.is_any_real_numeric_dtype(all_test_set[col])
     ]
-    pass
+    # remplir vide par mean(?)
 
 # etapes:
 # 1. lire dataset_test.csv et stocker dans DataFrame
