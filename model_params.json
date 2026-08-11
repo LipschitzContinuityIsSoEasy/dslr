@@ -12,19 +12,16 @@
         "History of Magic"
     ],
     "train_means": {
-        "Arithmancy": 49634.57024265645,
-        "Astronomy": 39.79713089016475,
-        "Herbology": 1.1410195296768046,
-        "Defense Against the Dark Arts": -0.38786349744178633,
-        "Divination": 3.1539096732863547,
-        "Muggle Studies": -224.58991486346417,
-        "Ancient Runes": 495.74797005915786,
-        "History of Magic": 2.9630946151165936,
-        "Transfiguration": 1030.0969463871306,
-        "Potions": 5.950372992780089,
-        "Care of Magical Creatures": -0.0534271367004963,
         "Charms": -243.3744090125,
-        "Flying": 21.9580125
+        "Defense Against the Dark Arts": -0.38786349744178633,
+        "Astronomy": 39.79713089016475,
+        "Ancient Runes": 495.74797005915786,
+        "Divination": 3.1539096732863547,
+        "Flying": 21.9580125,
+        "Herbology": 1.1410195296768046,
+        "Transfiguration": 1030.0969463871306,
+        "Muggle Studies": -224.58991486346417,
+        "History of Magic": 2.9630946151165936
     },
     "train_stds": {
         "Charms": 8.783639876017117,

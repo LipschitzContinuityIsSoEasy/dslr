@@ -78,6 +78,7 @@ def load_and_preprocess_data(file_name):
     # ===========================================================================================================================================================================
     # ici calculer stds
     train_stds = {}
+    train_means_top10 = {col: train_means[col] for col in best_features}
 
     for col in best_features:
         std_val = clean_data[col].std()
@@ -86,7 +87,7 @@ def load_and_preprocess_data(file_name):
         train_stds[col] = std_val
 
     # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
-    return clean_data[best_features + ['Hogwarts House']], best_features, train_means, train_stds
+    return clean_data[best_features + ['Hogwarts House']], best_features, train_means_top10, train_stds
 
 def normalize_data(cleaned_data, best_features):
     # 1. copier et coller

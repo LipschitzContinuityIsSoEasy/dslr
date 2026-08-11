@@ -50,9 +50,19 @@ def load_test_set(all_params, test_file):
     # print(all_test_set)
     if all_test_set['Index'].isnull().any():
         print("Attention : Il y a des valeurs manquantes dans la colonne Index !")
+
+    # Z-score normalization
     for col in all_params["best_features"]:
-        train_mean = all_params["train_means"][col]
-        all_test_set[col] = all_test_set[col].fillna(train_mean)
+        train_means = all_params["train_means"][col]
+        train_stds = all_params["train_stds"][col]
+        if train_stds == 0:
+            train_stds = 1.0
+        
+        all_test_set[col] = all_test_set[col].fillna(train_means)
+
+        all_test_set[col] = (all_test_set[col] - train_means) / train_stds
+
+    all_test_set["Index"] = all_test_set["Index"].astype(int)
     return all_test_set
 
 def test_single_houses(row, all_params, target_house):
@@ -120,7 +130,6 @@ def logreg_predict(test_set_file):
     cleand_test_data = load_test_set(all_params, test_set_file)
     result = predict(all_params, cleand_test_data)
     save_in_csv(result, save_to_file)
-
 
 def main():
     args = sys.argv
