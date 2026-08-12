@@ -14,7 +14,6 @@ from sklearn.feature_selection import f_classif
 def load_and_preprocess_data(file_name):
     #  1. lire et stocker
     try:
-        # abs_file_path = os.path.abspath(file_name)
         all_data = pd.read_csv(file_name)
     except FileNotFoundError:
         print(f"Erreur : Le fichier '{file_name}' est introuvable.")
@@ -42,11 +41,11 @@ def load_and_preprocess_data(file_name):
         return
 
     # 0.1 d'abord calculer mean
-    train_means = {}
+    raw_means = {}
 
     for col in course_cols:
         mean_val = all_data[col].mean()
-        train_means[col] = mean_val
+        raw_means[col] = mean_val
         # 0.2 remplire avec 
         all_data[col] = all_data[col].fillna(mean_val)
 
@@ -78,7 +77,7 @@ def load_and_preprocess_data(file_name):
     # ===========================================================================================================================================================================
     # ici calculer stds
     train_stds = {}
-    train_means_top10 = {col: train_means[col] for col in best_features}
+    train_means = {col: raw_means[col] for col in best_features}
 
     for col in best_features:
         std_val = clean_data[col].std()
@@ -86,10 +85,21 @@ def load_and_preprocess_data(file_name):
             std_val = 1.0
         train_stds[col] = std_val
 
+    data_for_normalize = {
+        "cleaned_data": clean_data[best_features + ['Hogwarts House']],
+        "best_features": best_features,
+        "train_means": train_means,
+        "train_stds": train_stds
+    }
     # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
-    return clean_data[best_features + ['Hogwarts House']], best_features, train_means_top10, train_stds
+    return data_for_normalize
 
-def normalize_data(cleaned_data, best_features):
+def normalize_data(pipeline_data):
+    cleaned_data = pipeline_data["cleaned_data"]
+    best_features = pipeline_data["best_features"]
+    train_means = pipeline_data["train_means"]
+    train_stds = pipeline_data["train_stds"]
+
     # 1. copier et coller
     normalized_copie = cleaned_data.copy()
 
@@ -98,18 +108,18 @@ def normalize_data(cleaned_data, best_features):
 
     # 3. juste les premiere 10 caracteristiques
     for col in best_features:
-        mean_val = normalized_copie[col].mean()
-        std_val = normalized_copie[col].std()
-
-        if std_val != 0:
-            normalized_copie[col] = (normalized_copie[col] - mean_val) / std_val
-        else:
-            normalized_copie[col] = 0.0
+        mean_val = train_means[col]
+        std_val = train_stds[col]
+        normalized_copie[col] = (normalized_copie[col] - mean_val) / std_val
 
     # 4. rajouter les houses
     normalized_copie['Hogwarts House'] = houses
 
-    return normalized_copie
+    # remplacer cleaned_data par normalized_copie
+    pipeline_data.pop("cleaned_data", None)
+    pipeline_data["normalized_data"] = normalized_copie
+
+    return pipeline_data
 
 # OvR (One-vs-All)
 def train_single_house(normalized_data, best_features, target_house, learning_rate):
@@ -209,10 +219,15 @@ def save_all_to_json(all_model_data, filename_json):
         exit(1)
     
 
-def train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds):
+def train_all_houses(pipeline_data, learning_rate):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"
     filename_json="model_params.json"
+
+    normalized_data = pipeline_data["normalized_data"]
+    best_features = pipeline_data["best_features"]
+    train_means = pipeline_data["train_means"]
+    train_stds = pipeline_data["train_stds"]
 
     weights_bias = {}
 
@@ -220,7 +235,18 @@ def train_all_houses(normalized_data, best_features, learning_rate, train_means,
         print(f"Entraînement du modèle pour : {house}...")
         weights, bias = train_single_house(normalized_data, best_features, house, learning_rate)
 
-        weights_bias[house] = {'weights': weights, 'bias': bias}
+        weights_dict = {}
+
+        for j in range(len(best_features)):
+            feature_name = best_features[j]
+            weight_value = weights[j]
+
+            weights_dict[feature_name] = weight_value
+
+        weights_bias[house] = {
+            "weights" : weights_dict,
+            "bias" : bias
+        }
 
     all_model_data = {
         "best_features" : best_features,
@@ -234,17 +260,18 @@ def train_all_houses(normalized_data, best_features, learning_rate, train_means,
 
 def logreg_train(file_name):
     # 1. faire 1 et 2
-    cleaned_data, best_features, train_means , train_stds= load_and_preprocess_data(file_name)
+    data_for_normalize = load_and_preprocess_data(file_name)
 
     # 2. faire 3 normalisation
     # =====================================================================================================================================================
     # attention: ici on utilise Z-score(x-niu)/sigma, pas (x-min)/(max-min)
-    normalized_data = normalize_data(cleaned_data, best_features)
+    normalized_data = normalize_data(data_for_normalize)
 
     learning_rate = 0.1
 
     # 3. boucle et aussi stocker dans un fichier a la fin
-    train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds)
+    # train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds)
+    train_all_houses(normalized_data, learning_rate)
 
 # 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
 # 2. F-score, choisir les premieres 10

@@ -71,11 +71,16 @@ def test_single_houses(row, all_params, target_house):
 
     z = house_data["bias"]
 
-    for j in range(len(all_params["best_features"])):
-        feature_name = all_params["best_features"][j]
-        z += house_data["weights"][j] * row[feature_name]
+    for feature_name in all_params["best_features"]:
+        weight = house_data["weights"][feature_name]
+        z += weight * row[feature_name]
 
-    res = 1.0 / (1.0 + math.exp(-z))
+    if z < -500:
+        res = 0.0
+    elif z > 500:
+        res = 1.0
+    else:
+        res = 1.0 / (1.0 + math.exp(-z))
     return res
 
 def test_all_houses(row, all_params):
@@ -108,7 +113,8 @@ def save_in_csv(result, save_to_file):
             # 2. ecrire les resultats
             for student_id, house_name in result.items():
                 row = [student_id, house_name]
-                writer.writerow(row)
+                # writer.writerow(row)
+                writer.writerow([int(student_id), result[student_id]])
         print(f"Resultats sauvegardés avec succès dans {save_to_file} !")
 
     except IOError as e:
