@@ -11,7 +11,7 @@ import json
 
 from sklearn.feature_selection import f_classif
 
-def load_and_preprocess_data(file_name):
+def load_and_preprocess_data(file_name, pipeline_data):
     #  1. lire et stocker
     try:
         all_data = pd.read_csv(file_name)
@@ -85,14 +85,14 @@ def load_and_preprocess_data(file_name):
             std_val = 1.0
         train_stds[col] = std_val
 
-    data_for_normalize = {
+    pipeline_data.update({
         "cleaned_data": clean_data[best_features + ['Hogwarts House']],
         "best_features": best_features,
         "train_means": train_means,
         "train_stds": train_stds
-    }
-    # return donnee: juste retouner les cols 'Hogwarts House' et les premiers 10 cols
-    return data_for_normalize
+    })
+
+    return pipeline_data
 
 def normalize_data(pipeline_data):
     cleaned_data = pipeline_data["cleaned_data"]
@@ -121,8 +121,15 @@ def normalize_data(pipeline_data):
 
     return pipeline_data
 
-# OvR (One-vs-All)
-def train_single_house(normalized_data, best_features, target_house, learning_rate):
+
+# BGD
+def bgd(pipeline_data, target_house):
+
+    normalized_data = pipeline_data["normalized_data"]
+    best_features = pipeline_data["best_features"]
+    learning_rate = pipeline_data["learning_rate"]
+    epochs = pipeline_data["epochs"]
+    
     # 1. ici on utilsie batch gradient descent(BGD)
     m = len(normalized_data)
     num_features = len(best_features)
@@ -131,7 +138,7 @@ def train_single_house(normalized_data, best_features, target_house, learning_ra
     weights = [0.0] * num_features
     bias = 0.0
 
-    for _ in range(300):
+    for _ in range(epochs):
         # Batch Gradient Descent (BGD)
         # La Descente de Gradient par Lot
 
@@ -177,6 +184,20 @@ def train_single_house(normalized_data, best_features, target_house, learning_ra
 
     return weights, bias
 
+# OvR (One-vs-All)
+def train_single_house(pipeline_data, target_house):
+    option = pipeline_data["option"]
+    if option == "BGD":
+        return bgd(pipeline_data, target_house)
+    elif option == "SGD":
+        pass
+        # return sgd(pipeline_data, target_house)
+    elif option == "minibatch":
+        pass
+        # return minibatch(pipeline_data, target_house)
+    else:
+        raise ValueError(f"Option inconnue : {option}")
+
 def save_weights_to_csv(all_parameters, filename):
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
@@ -219,12 +240,11 @@ def save_all_to_json(all_model_data, filename_json):
         exit(1)
     
 
-def train_all_houses(pipeline_data, learning_rate):
+def train_all_houses(pipeline_data):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"
     filename_json="model_params.json"
 
-    normalized_data = pipeline_data["normalized_data"]
     best_features = pipeline_data["best_features"]
     train_means = pipeline_data["train_means"]
     train_stds = pipeline_data["train_stds"]
@@ -233,7 +253,7 @@ def train_all_houses(pipeline_data, learning_rate):
 
     for house in houses:
         print(f"Entraînement du modèle pour : {house}...")
-        weights, bias = train_single_house(normalized_data, best_features, house, learning_rate)
+        weights, bias = train_single_house(pipeline_data, house)
 
         weights_dict = {}
 
@@ -258,20 +278,23 @@ def train_all_houses(pipeline_data, learning_rate):
     save_all_to_json(all_model_data, filename_json)
     print("Tous les modèles sont entraînés avec succès !")
 
-def logreg_train(file_name):
+def logreg_train(file_name, option):
+    pipeline_data = {
+        "option": option,
+        "learning_rate": 0.1,
+        "epochs" : 300,
+        "batch_size" : 32
+    }
     # 1. faire 1 et 2
-    data_for_normalize = load_and_preprocess_data(file_name)
+    pipeline_data = load_and_preprocess_data(file_name, pipeline_data)
 
     # 2. faire 3 normalisation
     # =====================================================================================================================================================
-    # attention: ici on utilise Z-score(x-niu)/sigma, pas (x-min)/(max-min)
-    normalized_data = normalize_data(data_for_normalize)
-
-    learning_rate = 0.1
+    # attention: ici oall_model_datan utilise Z-score(x-niu)/sigma, pas (x-min)/(max-min)
+    pipeline_data = normalize_data(pipeline_data)
 
     # 3. boucle et aussi stocker dans un fichier a la fin
-    # train_all_houses(normalized_data, best_features, learning_rate, train_means, train_stds)
-    train_all_houses(normalized_data, learning_rate)
+    train_all_houses(pipeline_data)
 
 # 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
 # 2. F-score, choisir les premieres 10
@@ -284,8 +307,9 @@ def logreg_train(file_name):
 def main():
     args = sys.argv
 
-    if len(args) != 2:
-        print("Usage: ./logreg_train.py datasets/dataset_train.csv")
+    if len(args) < 2:
+        print("Usage: ./logreg_train.py datasets/dataset_train.csv [option]")
+        print("Optimizers available: BGD (default), SGD, minibatch")
         exit(1)
 
     # if (args[1] != "datasets/dataset_train.csv"):
@@ -294,8 +318,13 @@ def main():
 
     file_name = args[1]
 
+    if len(args) > 2:
+        option = args[2]
+    else:
+        option = "BGD"
+
     try:
-        logreg_train(file_name)
+        logreg_train(file_name, option)
 
     except Exception as e:
         print(f"Erreur inattendue : {e}")
