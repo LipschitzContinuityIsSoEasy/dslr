@@ -124,7 +124,7 @@ def normalize_data(pipeline_data):
 
 # BGD
 def bgd(pipeline_data, target_house):
-
+    print("BGD")
     normalized_data = pipeline_data["normalized_data"]
     best_features = pipeline_data["best_features"]
     learning_rate = pipeline_data["learning_rate"]
@@ -184,14 +184,67 @@ def bgd(pipeline_data, target_house):
 
     return weights, bias
 
-# OvR (One-vs-All)
+
+# SGD
+def sgd(pipeline_data, target_house):
+    print("SGD")
+    normalized_data = pipeline_data["normalized_data"]
+    best_features = pipeline_data["best_features"]
+    learning_rate = pipeline_data["learning_rate"]
+    epochs = pipeline_data["epochs"]
+    
+    # 1. ici on utilsie batch gradient descent(BGD)
+    m = len(normalized_data)
+    num_features = len(best_features)
+
+    # initialiser tous en 0
+    weights = [0.0] * num_features
+    bias = 0.0
+
+    for _ in range(epochs):
+        # stochastic gradient descent (SGD)
+
+        # aleatoire pour eviter Data Ordering Bias
+        shuffled_data = normalized_data.sample(frac=1).reset_index(drop =True)
+
+        # pas besoin de sum_error
+
+        for i in range(m):
+            # 0. obtenir les donnees d'un eleve en i-eme ligne
+            row = shuffled_data.iloc[i]
+
+            # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
+            z = bias
+            for j in range(num_features):
+                feature_name = best_features[j]
+                z += weights[j] * row[feature_name]
+
+            # 2. remplacer dans Sigmoid pour avoir le resultat
+            prediction = 1.0 / (1.0 + math.exp(-z))
+
+            # 3. savoir le vrai label y pour l'eleve actuel (0 ou 1)
+            real_house = row['Hogwarts House']
+            y = 0.0
+            if (real_house == target_house):
+                y = 1.0
+
+            # 4. calculer l'error
+            error = prediction - y
+
+            # 5. pas besoin d'accumuler
+            bias = bias - learning_rate * error
+            for j in range(num_features):
+                feature_name = best_features[j]
+                weights[j] = weights[j] - learning_rate * error * row[feature_name]
+
+    return weights, bias
+
 def train_single_house(pipeline_data, target_house):
     option = pipeline_data["option"]
     if option == "BGD":
         return bgd(pipeline_data, target_house)
     elif option == "SGD":
-        pass
-        # return sgd(pipeline_data, target_house)
+        return sgd(pipeline_data, target_house)
     elif option == "minibatch":
         pass
         # return minibatch(pipeline_data, target_house)
@@ -239,7 +292,7 @@ def save_all_to_json(all_model_data, filename_json):
         print(f"Erreur lors de l'écriture du CSV : {e}")
         exit(1)
     
-
+# OvR (One-vs-All)
 def train_all_houses(pipeline_data):
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
     # filename="weights.csv"

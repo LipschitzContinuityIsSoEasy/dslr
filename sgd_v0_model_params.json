@@ -1,0 +1,100 @@
+{
+    "best_features": [
+        "Charms",
+        "Defense Against the Dark Arts",
+        "Astronomy",
+        "Ancient Runes",
+        "Divination",
+        "Flying",
+        "Herbology",
+        "Transfiguration",
+        "Muggle Studies",
+        "History of Magic"
+    ],
+    "train_means": {
+        "Charms": -243.3744090125,
+        "Defense Against the Dark Arts": -0.38786349744178633,
+        "Astronomy": 39.79713089016475,
+        "Ancient Runes": 495.74797005915786,
+        "Divination": 3.1539096732863547,
+        "Flying": 21.9580125,
+        "Herbology": 1.1410195296768046,
+        "Transfiguration": 1030.0969463871306,
+        "Muggle Studies": -224.58991486346417,
+        "History of Magic": 2.9630946151165936
+    },
+    "train_stds": {
+        "Charms": 8.783639876017117,
+        "Defense Against the Dark Arts": 5.162015873475544,
+        "Astronomy": 515.0657196248314,
+        "Ancient Runes": 105.11550760219578,
+        "Divination": 4.104313679917073,
+        "Flying": 97.63160206806158,
+        "Herbology": 5.16553955657155,
+        "Transfiguration": 43.653472666327566,
+        "Muggle Studies": 480.9926662154275,
+        "History of Magic": 4.3658605718039025
+    },
+    "weights": {
+        "Gryffindor": {
+            "weights": {
+                "Charms": -0.675706993447979,
+                "Defense Against the Dark Arts": 0.7620462115868722,
+                "Astronomy": 0.04825431731504031,
+                "Ancient Runes": -0.46695120490891556,
+                "Divination": 2.730646198510705,
+                "Flying": 4.128217974321682,
+                "Herbology": -2.4047586034111563,
+                "Transfiguration": -0.23237228034595253,
+                "Muggle Studies": 0.3310217655581974,
+                "History of Magic": 1.1009598929060567
+            },
+            "bias": -4.087918489697167
+        },
+        "Slytherin": {
+            "weights": {
+                "Charms": -2.4282421502420113,
+                "Defense Against the Dark Arts": 1.410093500245936,
+                "Astronomy": -0.8565103012910414,
+                "Ancient Runes": -0.19909918816410885,
+                "Divination": -1.4653881438271792,
+                "Flying": 0.5809659569435008,
+                "Herbology": -0.4686507190997015,
+                "Transfiguration": 2.2820836528725743,
+                "Muggle Studies": -0.21573129668616572,
+                "History of Magic": 0.9878499772083669
+            },
+            "bias": -4.0126140684870695
+        },
+        "Ravenclaw": {
+            "weights": {
+                "Charms": 0.999669902858595,
+                "Defense Against the Dark Arts": 0.7939479438931804,
+                "Astronomy": -0.895401284311148,
+                "Ancient Runes": 1.269816610364204,
+                "Divination": 0.06445997193452473,
+                "Flying": -0.7056424347075921,
+                "Herbology": 1.2598994660204481,
+                "Transfiguration": -0.3383132874223148,
+                "Muggle Studies": 0.8457633785128958,
+                "History of Magic": -0.006969684283879889
+            },
+            "bias": -2.506566968255551
+        },
+        "Hufflepuff": {
+            "weights": {
+                "Charms": 1.0964314899602148,
+                "Defense Against the Dark Arts": -1.754154101218504,
+                "Astronomy": 1.1126584948123601,
+                "Ancient Runes": -1.306061890880848,
+                "Divination": 0.10798522600847663,
+                "Flying": -2.1170370942659975,
+                "Herbology": 2.1212435057137857,
+                "Transfiguration": -0.5222057481891224,
+                "Muggle Studies": -1.5896681378990525,
+                "History of Magic": -0.21981808840022687
+            },
+            "bias": -2.6350325691685668
+        }
+    }
+}
