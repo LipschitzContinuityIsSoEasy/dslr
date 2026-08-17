@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -120,6 +119,7 @@ def show_grid(
             alpha=0.5,
             stat="density",
             common_norm=False,
+            kde=True,
             ax=ax,
             legend=False
         )
