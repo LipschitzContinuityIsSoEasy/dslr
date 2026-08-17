@@ -6,85 +6,170 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def histogram(file_name):
-    #  1. lire et stocker
-    try:
-        # abs_file_path = os.path.abspath(file_name)
-        all_data = pd.read_csv(file_name)
-    except FileNotFoundError:
-        print(f"Erreur : Le fichier '{file_name}' est introuvable.")
-        exit(1)
-    except pd.errors.EmptyDataError:
-        print(f"Erreur : Le fichier '{file_name}' est vide.")
-        exit(1)
-    except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
-        exit(1)
+from utils import validate_data, MANDATORY_COLUMNS
+from matplotlib.patches import Patch
 
-    # 1.1 verifier si House exist
-    if "Hogwarts House" not in all_data.columns:
-        print("Erreur : La colonne 'Hogwarts House' est introuvable dans le dataset.")
-        exit(1)
 
-    # 2. trouver tous les cours, sans index, que des chiffres
+def histogram(file_name: str) -> None:
+    """Display histograms for the Hogwarts dataset.
+
+    Args:
+        file_name: Path to the CSV file.
+
+    Returns:
+        None.
+    """
+    all_data = validate_data(file_name, testing=False)
+
+    # trouver tous les cours, sans index ni infos eleve
     course_cols = [
         col for col in all_data.columns
-        if col != 'Index' and pd.api.types.is_any_real_numeric_dtype(all_data[col])
+        if col not in MANDATORY_COLUMNS
     ]
 
-    if not course_cols:
-        print("Avertissement : Aucune colonne numérique valide n'a été trouvée pour les cours.")
-        return
+    # sort courses by homogeneity
+    spread = most_homogeneous(all_data, course_cols)
 
-    # creer les repertoires!
-    # chemin absolu
-    # os.makedirs("outputs/figures", exist_ok=True)
-    # obtenir lui-meme d'abord
-    current_script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_script_dir)
-    output_dir = os.path.join(project_root, "outputs", "hist")
-    os.makedirs(output_dir, exist_ok=True)
+    # show sorted courses on one grid
+    show_grid(all_data, course_cols, spread)
 
 
-    # 3. boucle pour chaque cours et dessiner
-    for col in course_cols:
-        try:
-            # 1. creer un canva
-            plt.figure(figsize=(10, 6))
+def most_homogeneous(
+    all_data: pd.DataFrame,
+    course_cols: list[str]
+) -> pd.Series:
+    """Find the most homogeneous course.
 
-            # 2. utiliser histplot dans Seaborn
-            # x est cours, hue est nom de house
-            # multiple="layer": plusieurs couches
-            # alpha: transparent 0.5
-            sns.histplot(
-                data = all_data,
-                x = col,
-                hue = "Hogwarts House",
-                multiple = "layer",
-                alpha = 0.5,
-                kde = True  # optionel
-            )
+    Args:
+        all_data: Dataset containing course results and Hogwarts houses.
+        course_cols: Course columns.
 
-            # 3. ajouter nom et label
-            plt.title(f"Histogram of {col} by Hogwarts House", fontsize=14)
-            plt.xlabel(col, fontsize=12)
-            plt.ylabel("Count", fontsize=12)
+    Returns:
+        Standard deviation of normalized house averages for each course.
+    """
+    course_data = all_data[course_cols]
 
-            # 4. sauvegarder en images
-            safe_col_name = col.replace(' ', '_').replace('/', '_')
-            output_filename = os.path.join(output_dir, f"{safe_col_name}_hist.png")
-            plt.savefig(output_filename)
+    # standardization of data
+    z_scores = (course_data - course_data.mean()) / course_data.std()
 
-            # close et free, dessiner le cours suivant
-            plt.close()
-            print(f"Sauvegarde: {output_filename}")
+    z_scores["Hogwarts House"] = all_data["Hogwarts House"]
 
-        # quand pb pour une image, imprimer l'error mais n'arrete pas boucle
-        except Exception as e:
-            plt.close()
-            print(f"Erreur lors de la génération du graphique pour '{col}' : {e}")
+    # separate into groups by house
+    spread = z_scores.groupby("Hogwarts House").mean().std().sort_values()
 
-def main():
+    print("Std by house :")
+    print(spread.to_string())
+    print(f"\nThe most homogeneous course : {spread.idxmin()}\n")
+
+    return spread
+
+
+def show_grid(
+    all_data: pd.DataFrame,
+    course_cols: list[str],
+    spread: pd.Series
+) -> None:
+    """Show a grid of courses ordered by homogeneity.
+
+    Args:
+        all_data: Dataset containing course results and Hogwarts houses.
+        course_cols: Course columns to display.
+        spread: Standard deviation for each course.
+
+    Returns:
+        None.
+    """
+    # get each house
+    houses = sorted(all_data["Hogwarts House"].dropna().unique())
+    # create colors for each house
+    palette = sns.color_palette(n_colors=len(houses))
+
+    # get presorted courses
+    ordered_courses = list(spread.index)
+
+    # define columns and rows
+    n_courses = len(ordered_courses)
+    ncols = 4
+    nrows = (n_courses + ncols - 1) // ncols
+
+    # create grid
+    fig, _ = plt.subplots(
+        nrows,
+        ncols,
+        figsize=(5 * ncols, 3.5 * nrows)
+    )
+    # get all subplots
+    axes = fig.axes
+
+    for rank, (ax, course) in enumerate(
+        # pair graph with a course
+        zip(axes, ordered_courses),
+        start=1
+    ):
+        # creates histogram
+        sns.histplot(
+            data=all_data,
+            x=course,
+            # separate by house
+            hue="Hogwarts House",
+            # use same house order
+            hue_order=houses,
+            palette=palette,
+            # layer them on top of each other
+            multiple="layer",
+            alpha=0.5,
+            stat="density",
+            common_norm=False,
+            ax=ax,
+            legend=False
+        )
+
+        ax.set_title(
+            f"#{rank}  {course}  (std={spread[course]:.3f})",
+            fontsize=10
+        )
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+
+    for ax in axes[n_courses:]:
+        ax.set_visible(False)
+
+    # create one legend for all subplots
+    handles = [
+        Patch(
+            facecolor=color,
+            alpha=0.5,
+            label=house
+        )
+        for house, color in zip(houses, palette)
+    ]
+
+    fig.legend(
+        handles=handles,
+        loc="upper right",
+        ncol=len(houses)
+    )
+
+    fig.suptitle(
+        "Courses ordered from most to least homogeneous",
+        fontsize=16
+    )
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.subplots_adjust(hspace=0.25)
+
+    plt.show()
+
+
+def main() -> None:
+    """Show a histogram for each course, sorted by homogeneity.
+
+    Expects the dataset path as an argument:
+    ./histogram.py <dataset.csv>
+
+    Returns:
+        None.
+    """
     args = sys.argv
     if len(args) < 2:
         print("Usage: ./histogram.py <dataset.csv>")
@@ -94,10 +179,10 @@ def main():
 
     try:
         histogram(file_name)
-
     except Exception as e:
-        print(f"Erreur inattendue : {e}")
+        print("Error: " + e.args[0] if e.args else "unexpected error.")
         exit(1)
+
 
 if __name__ == "__main__":
     main()
