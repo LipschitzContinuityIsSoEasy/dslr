@@ -1,41 +1,52 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def scatter_plot(file_name):
+from utils import validate_data, MANDATORY_COLUMNS
+
+
+def scatter_plot(file_name: str) -> None:
+    """Display a scatter plot of the two most similar courses.
+
+    Args:
+        file_name: Path to the CSV file.
+
+    Returns:
+        None.
+    """
     #  1. lire et stocker
-    try:
-        # abs_file_path = os.path.abspath(file_name)
-        all_data = pd.read_csv(file_name)
-    except FileNotFoundError:
-        print(f"Erreur : Le fichier '{file_name}' est introuvable.")
-        exit(1)
-    except pd.errors.EmptyDataError:
-        print(f"Erreur : Le fichier '{file_name}' est vide.")
-        exit(1)
-    except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
-        exit(1)
+    # validate all the data, verify that houses exist
+    all_data = validate_data(file_name, testing=False)
 
-    # 1.1 verifier si House exist
-    if "Hogwarts House" not in all_data.columns:
-        print("Erreur : La colonne 'Hogwarts House' est introuvable dans le dataset.")
-        exit(1)
-
-    # 2. trouver tous les cours, sans index, que des chiffres
+    # 2. trouver tous les cours
     course_cols = [
         col for col in all_data.columns
-        if col != 'Index' and pd.api.types.is_any_real_numeric_dtype(all_data[col])
+        if col not in MANDATORY_COLUMNS
     ]
 
-    if not course_cols:
-        print("Avertissement : Aucune colonne numérique valide n'a été trouvée pour les cours.")
-        return
+    # 3. find the two courses that look alike
+    course1, course2 = most_similar(all_data, course_cols)
 
+    # 4. draw the plot
+    show_scatter(all_data, course1, course2)
+
+
+def most_similar(
+    all_data: pd.DataFrame,
+    course_cols: list[str]
+) -> tuple[str, str]:
+    """Find the two courses with the strongest correlation.
+
+    Args:
+        all_data: Dataset containing course results and Hogwarts houses.
+        course_cols: Course columns to compare.
+
+    Returns:
+        Names of the two most similar courses.
+    """
     numeric_data = all_data[course_cols]
 
     # pour tout afficher
@@ -49,10 +60,13 @@ def scatter_plot(file_name):
     # aplatir la matrice et sort
     stacked_corr = corr_matrix.stack().sort_values(ascending=False)
 
-    filtered_corr = stacked_corr[stacked_corr.index.get_level_values(0) != stacked_corr.index.get_level_values(1)]
+    # enlever les paires d'un cours avec lui meme, elles valent 1
+    filtered_corr = stacked_corr[
+        stacked_corr.index.get_level_values(0)
+        != stacked_corr.index.get_level_values(1)
+    ]
 
     # print(" --- les premiers 4 corr--- ")
-
     # print(filtered_corr.head(4))
 
     best_pair = filtered_corr.index[0]
@@ -60,24 +74,33 @@ def scatter_plot(file_name):
 
     print(f"Les deux cours sont: {course1} et {course2}")
 
-    # creer les repertoires!
-    # chemin absolu
-    # os.makedirs("outputs/figures", exist_ok=True)
-    # obtenir lui-meme d'abord
-    current_script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_script_dir)
-    output_dir = os.path.join(project_root, "outputs", "plot")
-    os.makedirs(output_dir, exist_ok=True)
+    return course1, course2
 
+
+def show_scatter(
+    all_data: pd.DataFrame,
+    course1: str,
+    course2: str
+) -> None:
+    """Draw two courses against each other, one colour per house.
+
+    Args:
+        all_data: Dataset containing course results and Hogwarts houses.
+        course1: Course on the x axis.
+        course2: Course on the y axis.
+
+    Returns:
+        None.
+    """
     # creer le canva
-    plt.figure(figsize=(8,6))
+    plt.figure(figsize=(8, 6))
 
     # dessiner
     sns.scatterplot(
         data=all_data,
         x=course1,
         y=course2,
-        hue="Hogwarts House", # optionnel
+        hue="Hogwarts House",
         alpha=0.7
     )
 
@@ -87,13 +110,18 @@ def scatter_plot(file_name):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
 
-    output_path = os.path.join(output_dir, "scatter_plot.png")
-    plt.savefig(output_path)
-    print(f"Sauvegarde: {output_path}")
+    plt.show()
 
-    # plt.show()
 
-def main():
+def main() -> None:
+    """Show a scatter plot of the two most similar courses.
+
+    Expects the dataset path as an argument:
+    ./scatter_plot.py <dataset.csv>
+
+    Returns:
+        None.
+    """
     args = sys.argv
     if len(args) < 2:
         print("Usage: ./scatter_plot.py <dataset.csv>")
@@ -103,10 +131,10 @@ def main():
 
     try:
         scatter_plot(file_name)
-
     except Exception as e:
-        print(f"Erreur inattendue : {e}")
+        print("Error: " + e.args[0] if e.args else "unexpected error.")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

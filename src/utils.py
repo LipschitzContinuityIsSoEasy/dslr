@@ -81,3 +81,26 @@ def validate_data(
         raise ValueError("dataset contains no Hogwarts House values.")
 
     return data
+
+
+def short_name(course: str) -> str:
+    """Shorten a course name too long to fit beside a row.
+
+    Args:
+        course: Course name.
+
+    Returns:
+        The name itself, or its initials when it is too long.
+    """
+    if len(course) <= 15:
+        return course
+
+    # Defense Against the Dark Arts -> DADA
+    initials = "".join(
+        word[0] for word in course.split()
+        if word[0].isupper()
+    )
+    if len(initials) > 1:
+        return initials
+
+    return course[:15]
