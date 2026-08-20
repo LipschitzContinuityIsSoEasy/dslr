@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 import math
-import csv
 import json
 
 from sklearn.feature_selection import f_classif
@@ -121,181 +117,118 @@ def normalize_data(pipeline_data):
 
     return pipeline_data
 
+def calculate_single_prediction_and_error(row, best_features, weights, bias, target_house):
+    num_features = len(best_features)
 
-# BGD
-def bgd(pipeline_data, target_house):
-    print("BGD")
+    # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
+    z = bias
+    for j in range(num_features):
+        feature_name = best_features[j]
+        z += weights[j] * row[feature_name]
+
+    # 2. protection
+    if z < -700:
+        prediction = 0.0
+    elif z > 700:
+        prediction = 1.0
+    else:
+        prediction = 1.0 / (1.0 + math.exp(-z))
+
+    # 3. real lable
+    real_house = row['Hogwarts House']
+    y = 0.0
+    if real_house == target_house:
+        y = 1.0
+
+    # 4. calculer l'error
+    error = prediction - y
+    return error
+
+def train_single_house(pipeline_data, target_house):
+    option = pipeline_data["option"]
     normalized_data = pipeline_data["normalized_data"]
     best_features = pipeline_data["best_features"]
     learning_rate = pipeline_data["learning_rate"]
     epochs = pipeline_data["epochs"]
+    batch_size = pipeline_data["batch_size"]
     
-    # 1. ici on utilsie batch gradient descent(BGD)
     m = len(normalized_data)
     num_features = len(best_features)
-
-    # initialiser tous en 0
     weights = [0.0] * num_features
     bias = 0.0
 
-    for _ in range(epochs):
-        # Batch Gradient Descent (BGD)
-        # La Descente de Gradient par Lot
+    if option == "BGD":
+        batch_size = m
+        shuffle = False
+    elif option == "SGD":
+        batch_size = 1
+        shuffle = True
+    elif option == "minibatch":
+        batch_size = 32
+        shuffle = True
+    elif option == "minibatch-noshuffle":
+        batch_size = 32
+        shuffle = False
+    else:
+        raise ValueError(f"Option inconnue : {option}")
 
-        # initialiser les accumulateurs
-        sum_error_weights = [0.0] * num_features
-        sum_error_bias = 0.0
+    for _ in range(epochs):
+        if shuffle:
+            current_data = normalized_data.sample(frac=1).reset_index(drop=True)
+        else:
+            current_data = normalized_data
 
         # # stocker l'érreur carrée totale pour cet itération
         # current_sum_mse = 0.0
 
-        for i in range(m):
-            # 0. obtenir les donnees d'un eleve en i-eme ligne
-            row = normalized_data.iloc[i]
+        for i in range(0, m, batch_size):
+            batch = current_data.iloc[i : i + batch_size]
+            current_batch_size = len(batch)
 
-            # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
-            z = bias
+            sum_error_weights = [0.0] * num_features
+            sum_error_bias = 0.0
+
+            for _, row in batch.iterrows():
+                error = calculate_single_prediction_and_error(row, best_features, weights, bias, target_house)
+
+                sum_error_bias += error
+                for j in range(num_features):
+                    feature_name = best_features[j]
+                    sum_error_weights[j] += error * row[feature_name]
+            
+            bias = bias - (learning_rate * (1 / current_batch_size) * sum_error_bias)
             for j in range(num_features):
-                feature_name = best_features[j]
-                z += weights[j] * row[feature_name]
-
-            # 2. remplacer dans Sigmoid pour avoir le resultat
-            prediction = 1.0 / (1.0 + math.exp(-z))
-
-            # 3. savoir le vrai label y pour l'eleve actuel (0 ou 1)
-            real_house = row['Hogwarts House']
-            y = 0.0
-            if (real_house == target_house):
-                y = 1.0
-
-            # 4. calculer l'error
-            error = prediction - y
-
-            # 5. accumuler les gradients
-            sum_error_bias += error
-            for j in range(num_features):
-                feature_name = best_features[j]
-                sum_error_weights[j] += error * row[feature_name]
-
-        # 6. apres une boucle, renouveler tout en meme temps
-        bias = bias - (learning_rate * (1/m) * sum_error_bias)
-        for j in range(num_features):
-            weights[j] = weights[j] - (learning_rate * (1 / m) * sum_error_weights[j])
+                weights[j] = weights[j] - (learning_rate * (1 / current_batch_size) * sum_error_weights[j])
 
     return weights, bias
-
-
-# SGD
-def sgd(pipeline_data, target_house):
-    print("SGD")
-    normalized_data = pipeline_data["normalized_data"]
-    best_features = pipeline_data["best_features"]
-    learning_rate = pipeline_data["learning_rate"]
-    epochs = pipeline_data["epochs"]
-    
-    # 1. ici on utilsie batch gradient descent(BGD)
-    m = len(normalized_data)
-    num_features = len(best_features)
-
-    # initialiser tous en 0
-    weights = [0.0] * num_features
-    bias = 0.0
-
-    for _ in range(epochs):
-        # stochastic gradient descent (SGD)
-
-        # aleatoire pour eviter Data Ordering Bias
-        shuffled_data = normalized_data.sample(frac=1).reset_index(drop =True)
-
-        # pas besoin de sum_error
-
-        for i in range(m):
-            # 0. obtenir les donnees d'un eleve en i-eme ligne
-            row = shuffled_data.iloc[i]
-
-            # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
-            z = bias
-            for j in range(num_features):
-                feature_name = best_features[j]
-                z += weights[j] * row[feature_name]
-
-            # 2. remplacer dans Sigmoid pour avoir le resultat
-            prediction = 1.0 / (1.0 + math.exp(-z))
-
-            # 3. savoir le vrai label y pour l'eleve actuel (0 ou 1)
-            real_house = row['Hogwarts House']
-            y = 0.0
-            if (real_house == target_house):
-                y = 1.0
-
-            # 4. calculer l'error
-            error = prediction - y
-
-            # 5. pas besoin d'accumuler
-            bias = bias - learning_rate * error
-            for j in range(num_features):
-                feature_name = best_features[j]
-                weights[j] = weights[j] - learning_rate * error * row[feature_name]
-
-    return weights, bias
-
-def train_single_house(pipeline_data, target_house):
-    option = pipeline_data["option"]
-    if option == "BGD":
-        return bgd(pipeline_data, target_house)
-    elif option == "SGD":
-        return sgd(pipeline_data, target_house)
-    elif option == "minibatch":
-        pass
-        # return minibatch(pipeline_data, target_house)
-    else:
-        raise ValueError(f"Option inconnue : {option}")
-
-def save_weights_to_csv(all_parameters, filename):
-    try:
-        with open(filename, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            
-            # 1. headers (House, Bias, W0, W1, ... W9)
-            first_house_data = next(iter(all_parameters.values()))
-            num_features = len(first_house_data['weights'])
-            header = ['House', 'Bias'] + [f'W_{i}' for i in range(num_features)]
-            writer.writerow(header)
-            
-            # 2. ecrire les donnees dans le fichier
-            for house, params in all_parameters.items():
-                row = [house, params['bias']] + params['weights']
-                writer.writerow(row)
-                
-        print(f"Poids sauvegardés avec succès dans {filename} !")
-
-    except IOError as e:
-        print(f"Erreur lors de l'écriture du CSV : {e}")
-        exit(1)
 
 def save_all_to_json(all_model_data, filename_json):
+    """Save all trained model parameters (features, means, stds, weights, biases) 
+    into a JSON file with proper error handling.
+    """
     try:
-        # d'abord stocker les donnees dans le fichier
+        # Serialize and write model data to JSON
         with open(filename_json, "w") as f:
             json.dump(all_model_data, f, indent=4)
-            print(f"Modèle complet (features, means, weights) sauvegardé avec succès dans '{filename_json}' !")
+            print(f"Complete model successfully saved to '{filename_json}'!")
     except FileNotFoundError:       
-        print(f"Erreur : Le fichier '{filename_json}' not found")
+        print(f"Error: The file '{filename_json}' was not found.")
         exit(1)
     except PermissionError:
-        print(f"Erreur : Le fichier '{filename_json}' permission denied")
+        print(f"Error: Permission denied for file '{filename_json}'.")
         exit(1)
     except Exception as e:
-        print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
+        print(f"I/O error occurred while writing to JSON: {e}")
         exit(1)
     except IOError as e:
-        print(f"Erreur lors de l'écriture du CSV : {e}")
+        print(f"Unexpected error while saving JSON: {e}")
         exit(1)
     
-# OvR (One-vs-All)
 def train_all_houses(pipeline_data):
+    """Train One-vs-All (OvR) binary classifiers for all 4 Hogwarts houses 
+    and save the combined model parameters to a JSON file.
+    """
     houses = ['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff']
-    # filename="weights.csv"
     filename_json="model_params.json"
 
     best_features = pipeline_data["best_features"]
@@ -305,11 +238,10 @@ def train_all_houses(pipeline_data):
     weights_bias = {}
 
     for house in houses:
-        print(f"Entraînement du modèle pour : {house}...")
+        print(f"Training model for: {house}...")
         weights, bias = train_single_house(pipeline_data, house)
 
         weights_dict = {}
-
         for j in range(len(best_features)):
             feature_name = best_features[j]
             weight_value = weights[j]
@@ -327,47 +259,48 @@ def train_all_houses(pipeline_data):
         "train_stds" : train_stds,
         "weights" : weights_bias
     }
-    # ecrire dans un json
+    # Save all trained parameters to JSON
     save_all_to_json(all_model_data, filename_json)
-    print("Tous les modèles sont entraînés avec succès !")
+    print("All models trained successfully!")
 
 def logreg_train(file_name, option):
+    """Execute the full logistic regression training pipeline:
+        
+    1. Load and clean the dataset.
+    2. Normalize features using Z-score standardization: (x - mean) / std.
+    3. Train One-vs-All (OvR) binary classifiers for the 4 Hogwarts houses.
+    4. Save trained weights and metadata to a JSON file.
+    """    
     pipeline_data = {
         "option": option,
         "learning_rate": 0.1,
         "epochs" : 300,
         "batch_size" : 32
     }
-    # 1. faire 1 et 2
+    # 1. Load and preprocess data
     pipeline_data = load_and_preprocess_data(file_name, pipeline_data)
 
-    # 2. faire 3 normalisation
-    # =====================================================================================================================================================
-    # attention: ici oall_model_datan utilise Z-score(x-niu)/sigma, pas (x-min)/(max-min)
+    # 2. Normalize features (Z-score)
     pipeline_data = normalize_data(pipeline_data)
 
-    # 3. boucle et aussi stocker dans un fichier a la fin
+    # 3. Train all houses and save model parameters
     train_all_houses(pipeline_data)
 
-# 1. lire les donnee, stocker dans DataFrame dans Pandas, et nettoyer
-# 2. F-score, choisir les premieres 10
-# 3. normaliser tous ces premieres 10 caracteristiques
-# 4. une boucle pour les 4 maisons
-#     chaque fois est 1, les autres sont 0, faire 30 000 iterations
-#     obtenir 10 w et 1 biais
-#     je definit hyperparametres Learning-rate et nb d'iterations
-# 5. stocker dans un fichier
-def main():
+def main() -> None:
+    """Train a logistic regression model using specified gradient descent optimizer.
+
+    Expects the dataset path and an optional optimizer as arguments:
+    ./logreg_train.py <dataset_path.csv> [BGD/SGD/minibatch/minibatch-noshuffle]
+
+    Returns:
+        None.
+    """
     args = sys.argv
 
     if len(args) < 2:
         print("Usage: ./logreg_train.py datasets/dataset_train.csv [option]")
-        print("Optimizers available: BGD (default), SGD, minibatch")
+        print("Optimizers available: BGD (default), SGD, minibatch, minibatch-noshuffle")
         exit(1)
-
-    # if (args[1] != "datasets/dataset_train.csv"):
-    #     print("Usage: ./logreg_train.py datasets/dataset_train.csv")
-    #     exit(1)
 
     file_name = args[1]
 
@@ -380,7 +313,7 @@ def main():
         logreg_train(file_name, option)
 
     except Exception as e:
-        print(f"Erreur inattendue : {e}")
+        print("Error: " + e.args[0] if e.args else "unexpected error.")
         exit(1)
 
 if __name__ == "__main__":
