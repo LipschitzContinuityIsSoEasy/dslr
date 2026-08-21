@@ -5,106 +5,138 @@ import pandas as pd
 import math
 import json
 from sklearn.feature_selection import f_classif
+from utils import validate_data, MANDATORY_COLUMNS
 
+def calculate_mean(values: pd.Series) -> float:
+    """Calculate the mean of a series.
 
-def load_and_preprocess_data(file_name, pipeline_data):
-    # 1. lire et stocker
-    try:
-        all_data = pd.read_csv(file_name)
+    Args:
+        values: Numeric values used to calculate the mean.
 
-    except FileNotFoundError:
-        print(f"Erreur : Le fichier '{file_name}' est introuvable.")
-        exit(1)
+    Returns:
+        The mean of the values.
+    """
+    return values.sum() / values.count()
 
-    except pd.errors.EmptyDataError:
-        print(f"Erreur : Le fichier '{file_name}' est vide.")
-        exit(1)
+def fill_missing_values(
+        data: pd.DataFrame,
+        course_cols: list[str]
+) -> tuple[pd.DataFrame, dict[str, float]]:
+    """Fill missing course values with their column means.
 
-    except Exception as e:
-        print(f"Erreur lors de la lecture du fichier CSV : {e}")
-        exit(1)
+    Args:
+        data: Dataset containing course columns.
+        course_cols: List of course column names.
 
-    # 1.1 verifier si House exist
-    if "Hogwarts House" not in all_data.columns:
-        print(
-            "Erreur : La colonne 'Hogwarts House' est introuvable "
-            "dans le dataset."
-        )
-        exit(1)
-
-    # 2. trouver tous les cours, sans index, que des chiffres
-    course_cols = [
-        col
-        for col in all_data.columns
-        if col != 'Index'
-        and pd.api.types.is_any_real_numeric_dtype(all_data[col])
-    ]
-
-    if not course_cols:
-        print(
-            "Avertissement : Aucune colonne numérique valide n'a été "
-            "trouvée pour les cours."
-        )
-        return
-
-    # 0.1 d'abord calculer mean
+    Returns:
+        A tuple containing the cleaned data and the original course means.
+    """
     raw_means = {}
 
     for col in course_cols:
-        mean_val = all_data[col].mean()
+        mean_val = calculate_mean(data[col])
 
         raw_means[col] = mean_val
 
-        # 0.2 remplire avec
-        all_data[col] = all_data[col].fillna(mean_val)
+        data[col] = data[col].fillna(mean_val)
 
-    # non : netoyyer tous les NaN/None
-    clean_data = all_data[
-        course_cols + ['Hogwarts House']
-    ].dropna(subset=['Hogwarts House'])
+    return data, raw_means
+
+def select_best_features(
+    data: pd.DataFrame,
+    course_cols: list[str]
+) -> list[str]:
+    """Select the ten course features with the highest F-scores.
+
+    Args:
+        data: Dataset containing the course values and house labels.
+        course_cols: List of course column names.
+
+    Returns:
+        List of the ten best course features.
+    """
+    clean_data = data[
+        course_cols + ["Hogwarts House"]
+    ].dropna(subset=["Hogwarts House"])
 
     X = clean_data[course_cols]
 
-    y = clean_data['Hogwarts House']
+    y = clean_data["Hogwarts House"]
 
-    # 4. Calculer la valeur F (F-score) et la valeur P pour chaque cours
     f_values, p_values = f_classif(X, y)
 
-    # 5. Regrouper dans un DataFrame et trier par valeur F décroissante
     feature_ranking = pd.DataFrame({
-        'Feature': course_cols,
-        'F_Value': f_values,
-        'P_Value': p_values
+        "Feature": course_cols,
+        "F_Value": f_values,
+        "P_Value": p_values
     }).sort_values(
-        by='F_Value',
+        by="F_Value",
         ascending=False
     ).reset_index(drop=True)
 
     print(
-        "--- Classement des cours selon leur capacité à différencier "
-        "les maisons (plus le F-score est élevé, meilleur est le "
-        "résultat de classification) ---"
+        "--- Course ranking by ability to differentiate houses ---"
     )
     print(feature_ranking.to_string(index=False))
 
-    # 6. Sélectionner automatiquement les 10 meilleures caractéristiques
-    # avec le F-score le plus élevé pour les utiliser dans la
-    # régression logistique
     top_k = 10
 
-    best_features = feature_ranking['Feature'].head(top_k).tolist()
+    best_features = (
+        feature_ranking["Feature"]
+        .head(top_k)
+        .tolist()
+    )
 
     print(
-        "\nCaractéristiques recommandées pour la "
-        f"régression logistique (top {top_k}) :"
+        f"\nRecommended features for logistic regression "
+        f"(top {top_k}):"
     )
     print(best_features)
 
-    # ===========================================================================================================================================================================
-    # ici calculer stds
-    train_stds = {}
+    return best_features
 
-    train_means = {col: raw_means[col] for col in best_features}
+def load_and_preprocess_data(
+    file_name: str,
+    pipeline_data: dict
+) -> dict:
+    """Load, clean, and prepare data for logistic regression.
+
+    Args:
+        file_name: Path to the training CSV file.
+        pipeline_data: Dictionary containing training parameters.
+
+    Returns:
+        Updated pipeline data containing the cleaned dataset,
+        selected features, means, and standard deviations.
+    """
+    all_data = validate_data(file_name, False)
+
+    course_cols = [
+        col 
+        for col in all_data.columns
+        if col not in MANDATORY_COLUMNS
+    ]
+
+    all_data, raw_means = fill_missing_values(
+        all_data,
+        course_cols
+    )
+
+    best_features = select_best_features(
+        all_data,
+        course_cols
+    )
+
+    clean_data = all_data[
+        course_cols + ["Hogwarts House"]
+    ].dropna(subset=["Hogwarts House"])
+
+    train_means = {
+        col: raw_means[col]
+        for col in best_features
+    }
+
+    train_stds = {}
 
     for col in best_features:
         std_val = clean_data[col].std()
@@ -116,7 +148,7 @@ def load_and_preprocess_data(file_name, pipeline_data):
 
     pipeline_data.update({
         "cleaned_data": clean_data[
-            best_features + ['Hogwarts House']
+            best_features + ["Hogwarts House"]
         ],
         "best_features": best_features,
         "train_means": train_means,
@@ -125,8 +157,15 @@ def load_and_preprocess_data(file_name, pipeline_data):
 
     return pipeline_data
 
+def normalize_data(pipeline_data: dict) -> dict:
+    """Normalize the selected features using Z-score standardization.
 
-def normalize_data(pipeline_data):
+    Args:
+        pipeline_data: Dictionary containing the cleaned data and parameters.
+
+    Returns:
+        The updated pipeline data containing the normalized dataset.
+    """
     cleaned_data = pipeline_data["cleaned_data"]
 
     best_features = pipeline_data["best_features"]
@@ -135,13 +174,13 @@ def normalize_data(pipeline_data):
 
     train_stds = pipeline_data["train_stds"]
 
-    # 1. copier et coller
+    # 1. Copy the cleaned data
     normalized_copie = cleaned_data.copy()
 
-    # 2. supprimer les houses
+    # 2. Remove the house labels before normalization
     houses = normalized_copie.pop('Hogwarts House')
 
-    # 3. juste les premiere 10 caracteristiques
+    # 3. Normalize the selected features
     for col in best_features:
         mean_val = train_means[col]
 
@@ -151,10 +190,10 @@ def normalize_data(pipeline_data):
             normalized_copie[col] - mean_val
         ) / std_val
 
-    # 4. rajouter les houses
+    # 4. Add the house labels back
     normalized_copie['Hogwarts House'] = houses
 
-    # remplacer cleaned_data par normalized_copie
+    # 5. Replace cleaned_data with normalized_data
     pipeline_data.pop("cleaned_data", None)
 
     pipeline_data["normalized_data"] = normalized_copie
@@ -163,15 +202,27 @@ def normalize_data(pipeline_data):
 
 
 def calculate_single_prediction_and_error(
-    row,
-    best_features,
-    weights,
-    bias,
-    target_house
-):
+    row: pd.Series,
+    best_features: list[str],
+    weights: list[float],
+    bias: float,
+    target_house: str
+) -> float:
+    """Calculate the prediction error for one training sample.
+
+    Args:
+        row: DataFrame row containing the sample features and house label.
+        best_features: List of feature names used for training.
+        weights: Model weights for the selected features.
+        bias: Model bias.
+        target_house: Hogwarts house used as the positive class.
+
+    Returns:
+        The prediction error for the sample.
+    """
     num_features = len(best_features)
 
-    # 1. calculer score lineaire z = b + w1*x1 + w2*x2 + ..
+    # 1. Calculate the linear score: z = b + w1*x1 + w2*x2 + ...
     z = bias
 
     for j in range(num_features):
@@ -179,7 +230,7 @@ def calculate_single_prediction_and_error(
 
         z += weights[j] * row[feature_name]
 
-    # 2. protection
+    # 2. Protect against numerical overflow in the sigmoid calculation
     if z < -700:
         prediction = 0.0
 
@@ -189,7 +240,7 @@ def calculate_single_prediction_and_error(
     else:
         prediction = 1.0 / (1.0 + math.exp(-z))
 
-    # 3. real lable
+    # 3. Get the real label
     real_house = row['Hogwarts House']
 
     y = 0.0
@@ -197,13 +248,58 @@ def calculate_single_prediction_and_error(
     if real_house == target_house:
         y = 1.0
 
-    # 4. calculer l'error
+    # 4. Calculate the prediction error
     error = prediction - y
 
     return error
 
+def get_optimizer_settings(
+    option: str,
+    data_size: int
+) -> tuple[int, bool]:
+    """Get batch size and shuffle settings for the optimizer.
 
-def train_single_house(pipeline_data, target_house):
+    Args:
+        option: Gradient descent optimizer to use.
+        data_size: Number of training samples.
+
+    Returns:
+        A tuple containing the batch size and shuffle setting.
+
+    Raises:
+        ValueError: If the specified optimizer is unknown.
+    """
+    if option == "BGD":
+        return data_size, False
+
+    elif option == "SGD":
+        return 1, True
+
+    elif option == "minibatch":
+        return 32, True
+
+    elif option == "minibatch-noshuffle":
+        return 32, False
+
+    else:
+        raise ValueError(f"Unknown optimizer option: {option}")
+
+def train_single_house(
+    pipeline_data: dict,
+    target_house: str
+) -> tuple[list[float], float]:
+    """Train a binary logistic regression model for one house.
+
+    Args:
+        pipeline_data: Dictionary containing training data and parameters.
+        target_house: Name of the Hogwarts house to train the model for.
+
+    Returns:
+        A tuple containing the trained weights and bias.
+
+    Raises:
+        ValueError: If the specified optimizer is unknown.
+    """
     option = pipeline_data["option"]
 
     normalized_data = pipeline_data["normalized_data"]
@@ -214,8 +310,6 @@ def train_single_house(pipeline_data, target_house):
 
     epochs = pipeline_data["epochs"]
 
-    batch_size = pipeline_data["batch_size"]
-
     m = len(normalized_data)
 
     num_features = len(best_features)
@@ -224,28 +318,10 @@ def train_single_house(pipeline_data, target_house):
 
     bias = 0.0
 
-    if option == "BGD":
-        batch_size = m
-
-        shuffle = False
-
-    elif option == "SGD":
-        batch_size = 1
-
-        shuffle = True
-
-    elif option == "minibatch":
-        batch_size = 32
-
-        shuffle = True
-
-    elif option == "minibatch-noshuffle":
-        batch_size = 32
-
-        shuffle = False
-
-    else:
-        raise ValueError(f"Option inconnue : {option}")
+    batch_size, shuffle = get_optimizer_settings(
+        option,
+        m
+    )
 
     for _ in range(epochs):
         if shuffle:
@@ -309,10 +385,24 @@ def train_single_house(pipeline_data, target_house):
     return weights, bias
 
 
-def save_all_to_json(all_model_data, filename_json):
-    """Save all trained model parameters
-        (features, means, stds, weights, biases)
+def save_all_to_json(all_model_data: dict, filename_json: str) -> None:
+    """Save all trained model parameters.
+
+    This includes features, means, stds, weights, and biases 
     into a JSON file with proper error handling.
+
+    Args:
+        all_model_data: Dictionary containing the trained model parameters.
+        filename_json: Path to the JSON file.
+    
+    Returns:
+        None.
+    
+    Raises:
+        FileNotFoundError: If the file or directory is not found.
+        PermissionError: If permission is denied when writing the file.
+        IOError: If an input/output error occurs.
+        Exception: If an unexpected error occurs.
     """
     try:
         # Serialize and write model data to JSON
@@ -335,22 +425,31 @@ def save_all_to_json(all_model_data, filename_json):
         )
         exit(1)
 
-    except Exception as e:
-        print(
-            f"I/O error occurred while writing to JSON: {e}"
-        )
-        exit(1)
-
     except IOError as e:
         print(
-            f"Unexpected error while saving JSON: {e}"
+            f"Error: I/O error while saving the JSON file: {e}"
+        )
+        exit(1)
+
+    except Exception as e:
+        print(
+            f"Error: An unexpected error occurred: {e}"
         )
         exit(1)
 
 
-def train_all_houses(pipeline_data):
+def train_all_houses(pipeline_data: dict) -> None:
     """Train One-vs-All (OvR) binary classifiers for all 4 Hogwarts houses
     and save the combined model parameters to a JSON file.
+
+    Args:
+        pipeline_data: Dictionary containing the training data and parameters.
+    
+    Returns:
+        None.
+    
+    Raises:
+        Exception: If training or saving the model fails.
     """
     houses = [
         'Gryffindor',
@@ -404,12 +503,18 @@ def train_all_houses(pipeline_data):
     print("All models trained successfully!")
 
 
-def logreg_train(file_name, option):
-    """Execute the full logistic regression training pipeline:
-    1. Load and clean the dataset.
-    2. Normalize features using Z-score standardization: (x - mean) / std.
-    3. Train One-vs-All (OvR) binary classifiers for the 4 Hogwarts houses.
-    4. Save trained weights and metadata to a JSON file.
+def logreg_train(file_name: str, option: str) -> None:
+    """Train a logistic regression model.
+
+    Args:
+        file_name: Path to the training dataset.
+        option: Gradient descent optimizer to use.
+    
+    Returns:
+        None.
+    
+    Raises:
+        Exception: If training fails.
     """
     pipeline_data = {
         "option": option,
@@ -432,16 +537,21 @@ def logreg_train(file_name, option):
 
 
 def main() -> None:
-    """Train a logistic regression model using specified
-       gradient descent optimizer.
+    """Train a logistic regression model using the specified optimizer.
 
     Expects the dataset path and an optional optimizer as arguments:
 
     ./logreg_train.py <dataset_path.csv> \
         [BGD/SGD/minibatch/minibatch-noshuffle]
 
+    Args:
+        None.
+
     Returns:
         None.
+    
+    Raises:
+        Exception: If training fails.
     """
     args = sys.argv
 
