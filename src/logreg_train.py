@@ -163,6 +163,11 @@ def load_and_preprocess_data(
 
     return pipeline_data
 
+def normalize_data(pipeline_data: dict) -> dict:
+    """Normalize the selected features using Z-score standardization.
+
+    Args:
+        pipeline_data: Dictionary containing the cleaned data and parameters.
 
 def normalize_data(pipeline_data: dict) -> dict:
     """Normalize the selected features using Z-score standardization.
@@ -260,6 +265,11 @@ def calculate_single_prediction_and_error(
 
     return error
 
+def get_optimizer_settings(
+    option: str,
+    data_size: int
+) -> tuple[int, bool]:
+    """Get batch size and shuffle settings for the optimizer.
 
 def get_optimizer_settings(
     option: str,
@@ -312,21 +322,35 @@ def train_single_house(
     """
     option = pipeline_data["option"]
 
-    normalized_data = pipeline_data["normalized_data"]
+    Returns:
+        A tuple containing the batch size and shuffle setting.
 
-    best_features = pipeline_data["best_features"]
+    Raises:
+        ValueError: If the specified optimizer is unknown.
+    """
+    if option == "BGD":
+        return data_size, False
 
-    learning_rate = pipeline_data["learning_rate"]
+    elif option == "SGD":
+        return 1, True
 
-    epochs = pipeline_data["epochs"]
+    elif option == "minibatch":
+        return 32, True
 
     m = len(normalized_data)
 
-    num_features = len(best_features)
+def train_single_house(
+    pipeline_data: dict,
+    target_house: str
+) -> tuple[list[float], float]:
+    """Train a binary logistic regression model for one house.
 
-    weights = [0.0] * num_features
+    Args:
+        pipeline_data: Dictionary containing training data and parameters.
+        target_house: Name of the Hogwarts house to train the model for.
 
-    bias = 0.0
+    Returns:
+        A tuple containing the trained weights and bias.
 
     batch_size, shuffle = get_optimizer_settings(
         option,
