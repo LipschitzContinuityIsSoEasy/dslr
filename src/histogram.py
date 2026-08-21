@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""Displays a histogram answering the following question:
+
+    Which Hogwarts course has a homogeneous score distribution
+        between all four houses?
+"""
+
 import sys
 import pandas as pd
 import seaborn as sns

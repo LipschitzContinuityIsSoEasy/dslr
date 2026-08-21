@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+
+"""Utility files to export data validation and name shortening.
+"""
+
 import pandas as pd
 
 MANDATORY_COLUMNS = [

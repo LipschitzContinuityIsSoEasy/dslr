@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+"""Generates the prediction file to evaluate the performance of classifier.
+"""
+
 import sys
 import pandas as pd
 import math
@@ -40,15 +43,6 @@ def load_model_params(file_model: str) -> dict:
 
     return all_params
 
-def load_test_set(
-    all_params: dict,
-    test_file: str
-) -> pd.DataFrame:
-    """Load and normalize the test dataset.
-
-    Args:
-        all_params: Trained model parameters.
-        test_file: Path to the test CSV file.
 
 def load_test_set(
     all_params: dict,
@@ -248,8 +242,6 @@ def logreg_predict(test_set_file: str) -> None:
         save_to_file
     )
 
-def main() -> None:
-    """Run the logistic regression prediction program.
 
 def main() -> None:
     """Run the logistic regression prediction program.
