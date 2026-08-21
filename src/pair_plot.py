@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""Displays a pair plot answering the following question:
+
+    From this visualization, which features are you going
+        to use for your logistic regression?
+"""
+
 import sys
 import pandas as pd
 import seaborn as sns

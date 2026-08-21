@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""Displays a scatter plot answering the following question:
+
+    What are the two features that are similar?
+"""
+
 import sys
 import pandas as pd
 import seaborn as sns

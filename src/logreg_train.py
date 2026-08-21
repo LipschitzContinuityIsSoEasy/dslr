@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+"""Trains the model using log regression.
+"""
+
 import sys
 import pandas as pd
 import math
@@ -163,11 +166,6 @@ def load_and_preprocess_data(
 
     return pipeline_data
 
-def normalize_data(pipeline_data: dict) -> dict:
-    """Normalize the selected features using Z-score standardization.
-
-    Args:
-        pipeline_data: Dictionary containing the cleaned data and parameters.
 
 def normalize_data(pipeline_data: dict) -> dict:
     """Normalize the selected features using Z-score standardization.
@@ -265,11 +263,6 @@ def calculate_single_prediction_and_error(
 
     return error
 
-def get_optimizer_settings(
-    option: str,
-    data_size: int
-) -> tuple[int, bool]:
-    """Get batch size and shuffle settings for the optimizer.
 
 def get_optimizer_settings(
     option: str,
@@ -306,7 +299,7 @@ def get_optimizer_settings(
 def train_single_house(
     pipeline_data: dict,
     target_house: str,
-    view=None
+    view: dict = None
 ) -> tuple[list[float], float]:
     """Train a binary logistic regression model for one house.
 
@@ -322,35 +315,21 @@ def train_single_house(
     """
     option = pipeline_data["option"]
 
-    Returns:
-        A tuple containing the batch size and shuffle setting.
+    normalized_data = pipeline_data["normalized_data"]
 
-    Raises:
-        ValueError: If the specified optimizer is unknown.
-    """
-    if option == "BGD":
-        return data_size, False
+    best_features = pipeline_data["best_features"]
 
-    elif option == "SGD":
-        return 1, True
+    learning_rate = pipeline_data["learning_rate"]
 
-    elif option == "minibatch":
-        return 32, True
+    epochs = pipeline_data["epochs"]
 
     m = len(normalized_data)
 
-def train_single_house(
-    pipeline_data: dict,
-    target_house: str
-) -> tuple[list[float], float]:
-    """Train a binary logistic regression model for one house.
+    num_features = len(best_features)
 
-    Args:
-        pipeline_data: Dictionary containing training data and parameters.
-        target_house: Name of the Hogwarts house to train the model for.
+    weights = [0.0] * num_features
 
-    Returns:
-        A tuple containing the trained weights and bias.
+    bias = 0.0
 
     batch_size, shuffle = get_optimizer_settings(
         option,
@@ -478,7 +457,7 @@ def save_all_to_json(all_model_data: dict, filename_json: str) -> None:
         exit(1)
 
 
-def train_all_houses(pipeline_data: dict, view=None) -> None:
+def train_all_houses(pipeline_data: dict, view: dict = None) -> None:
     """Train One-vs-All (OvR) binary classifiers for all 4 Hogwarts houses
     and save the combined model parameters to a JSON file.
 

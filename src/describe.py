@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+"""Performs Data Analysis on the features present in the datasets.
+"""
+
 import sys
 import csv
 import math
