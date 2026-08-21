@@ -16,7 +16,8 @@ VALID_HOUSES = {"Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"}
 
 def validate_data(
     file_name: str,
-    testing: bool = False
+    testing: bool = False,
+    all_params: dict | None = None,
 ) -> pd.DataFrame:
     """Load and validate the Hogwarts dataset.
 
@@ -79,6 +80,9 @@ def validate_data(
         raise ValueError(f"invalid Hogwarts House values: {invalid_houses}")
     if not testing and not found_houses:
         raise ValueError("dataset contains no Hogwarts House values.")
+
+    if testing:
+        data = data[["Index"] + all_params["best_features"]]
 
     return data
 

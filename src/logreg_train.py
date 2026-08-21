@@ -4,8 +4,11 @@ import sys
 import pandas as pd
 import math
 import json
+import training_plot
+
 from sklearn.feature_selection import f_classif
 from utils import validate_data, MANDATORY_COLUMNS
+
 
 def calculate_mean(values: pd.Series) -> float:
     """Calculate the mean of a series.
@@ -17,6 +20,7 @@ def calculate_mean(values: pd.Series) -> float:
         The mean of the values.
     """
     return values.sum() / values.count()
+
 
 def fill_missing_values(
         data: pd.DataFrame,
@@ -41,6 +45,7 @@ def fill_missing_values(
         data[col] = data[col].fillna(mean_val)
 
     return data, raw_means
+
 
 def select_best_features(
     data: pd.DataFrame,
@@ -95,6 +100,7 @@ def select_best_features(
 
     return best_features
 
+
 def load_and_preprocess_data(
     file_name: str,
     pipeline_data: dict
@@ -112,7 +118,7 @@ def load_and_preprocess_data(
     all_data = validate_data(file_name, False)
 
     course_cols = [
-        col 
+        col
         for col in all_data.columns
         if col not in MANDATORY_COLUMNS
     ]
@@ -156,6 +162,12 @@ def load_and_preprocess_data(
     })
 
     return pipeline_data
+
+def normalize_data(pipeline_data: dict) -> dict:
+    """Normalize the selected features using Z-score standardization.
+
+    Args:
+        pipeline_data: Dictionary containing the cleaned data and parameters.
 
 def normalize_data(pipeline_data: dict) -> dict:
     """Normalize the selected features using Z-score standardization.
@@ -259,6 +271,12 @@ def get_optimizer_settings(
 ) -> tuple[int, bool]:
     """Get batch size and shuffle settings for the optimizer.
 
+def get_optimizer_settings(
+    option: str,
+    data_size: int
+) -> tuple[int, bool]:
+    """Get batch size and shuffle settings for the optimizer.
+
     Args:
         option: Gradient descent optimizer to use.
         data_size: Number of training samples.
@@ -284,9 +302,11 @@ def get_optimizer_settings(
     else:
         raise ValueError(f"Unknown optimizer option: {option}")
 
+
 def train_single_house(
     pipeline_data: dict,
-    target_house: str
+    target_house: str,
+    view=None
 ) -> tuple[list[float], float]:
     """Train a binary logistic regression model for one house.
 
@@ -302,28 +322,44 @@ def train_single_house(
     """
     option = pipeline_data["option"]
 
-    normalized_data = pipeline_data["normalized_data"]
+    Returns:
+        A tuple containing the batch size and shuffle setting.
 
-    best_features = pipeline_data["best_features"]
+    Raises:
+        ValueError: If the specified optimizer is unknown.
+    """
+    if option == "BGD":
+        return data_size, False
 
-    learning_rate = pipeline_data["learning_rate"]
+    elif option == "SGD":
+        return 1, True
 
-    epochs = pipeline_data["epochs"]
+    elif option == "minibatch":
+        return 32, True
 
     m = len(normalized_data)
 
-    num_features = len(best_features)
+def train_single_house(
+    pipeline_data: dict,
+    target_house: str
+) -> tuple[list[float], float]:
+    """Train a binary logistic regression model for one house.
 
-    weights = [0.0] * num_features
+    Args:
+        pipeline_data: Dictionary containing training data and parameters.
+        target_house: Name of the Hogwarts house to train the model for.
 
-    bias = 0.0
+    Returns:
+        A tuple containing the trained weights and bias.
 
     batch_size, shuffle = get_optimizer_settings(
         option,
         m
     )
 
-    for _ in range(epochs):
+    training_plot.show_progress(view, target_house, 0, weights, bias)
+
+    for epoch in range(epochs):
         if shuffle:
             current_data = (
                 normalized_data
@@ -382,22 +418,26 @@ def train_single_house(
                     )
                 )
 
+        training_plot.show_progress(
+            view, target_house, epoch, weights, bias
+        )
+
     return weights, bias
 
 
 def save_all_to_json(all_model_data: dict, filename_json: str) -> None:
     """Save all trained model parameters.
 
-    This includes features, means, stds, weights, and biases 
+    This includes features, means, stds, weights, and biases
     into a JSON file with proper error handling.
 
     Args:
         all_model_data: Dictionary containing the trained model parameters.
         filename_json: Path to the JSON file.
-    
+
     Returns:
         None.
-    
+
     Raises:
         FileNotFoundError: If the file or directory is not found.
         PermissionError: If permission is denied when writing the file.
@@ -438,16 +478,16 @@ def save_all_to_json(all_model_data: dict, filename_json: str) -> None:
         exit(1)
 
 
-def train_all_houses(pipeline_data: dict) -> None:
+def train_all_houses(pipeline_data: dict, view=None) -> None:
     """Train One-vs-All (OvR) binary classifiers for all 4 Hogwarts houses
     and save the combined model parameters to a JSON file.
 
     Args:
         pipeline_data: Dictionary containing the training data and parameters.
-    
+
     Returns:
         None.
-    
+
     Raises:
         Exception: If training or saving the model fails.
     """
@@ -473,7 +513,8 @@ def train_all_houses(pipeline_data: dict) -> None:
 
         weights, bias = train_single_house(
             pipeline_data,
-            house
+            house,
+            view
         )
 
         weights_dict = {}
@@ -509,10 +550,10 @@ def logreg_train(file_name: str, option: str) -> None:
     Args:
         file_name: Path to the training dataset.
         option: Gradient descent optimizer to use.
-    
+
     Returns:
         None.
-    
+
     Raises:
         Exception: If training fails.
     """
@@ -532,8 +573,14 @@ def logreg_train(file_name: str, option: str) -> None:
     # 2. Normalize features (Z-score)
     pipeline_data = normalize_data(pipeline_data)
 
-    # 3. Train all houses and save model parameters
-    train_all_houses(pipeline_data)
+    # 3. Open animating window
+    view = training_plot.open_view(pipeline_data)
+
+    # 4. Train all houses and save model parameters
+    train_all_houses(pipeline_data, view)
+
+    # 5. Keep the animation window open
+    training_plot.keep_open(view)
 
 
 def main() -> None:
@@ -549,7 +596,7 @@ def main() -> None:
 
     Returns:
         None.
-    
+
     Raises:
         Exception: If training fails.
     """

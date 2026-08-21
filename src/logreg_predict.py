@@ -6,6 +6,9 @@ import math
 import csv
 import json
 
+from utils import validate_data
+
+
 def load_model_params(file_model: str) -> dict:
     """Load trained model parameters from a JSON file.
 
@@ -47,31 +50,24 @@ def load_test_set(
         all_params: Trained model parameters.
         test_file: Path to the test CSV file.
 
+def load_test_set(
+    all_params: dict,
+    test_file: str
+) -> pd.DataFrame:
+    """Load and normalize the test dataset.
+
+    Args:
+        all_params: Trained model parameters.
+        test_file: Path to the test CSV file.
+
     Returns:
         The cleaned and normalized test dataset.
     """
-    try:
-        all_test_set = pd.read_csv(
-            test_file,
-            usecols=["Index"] + all_params["best_features"]
-        )
-
-    except FileNotFoundError:
-        print(f"Error: The file '{test_file}' was not found.")
-        exit(1)
-
-    except pd.errors.EmptyDataError:
-        print(f"Error: The file '{test_file}' is empty.")
-        exit(1)
-
-    except Exception as e:
-        print(f"Error while reading the CSV file: {e}")
-        exit(1)
-
-    if all_test_set["Index"].isnull().any():
-        print(
-            "Warning: Missing values found in the Index column."
-        )
+    all_test_set = validate_data(
+        test_file,
+        testing=True,
+        all_params=all_params
+    )
 
     for col in all_params["best_features"]:
         train_mean = all_params["train_means"][col]
@@ -91,6 +87,7 @@ def load_test_set(
     all_test_set["Index"] = all_test_set["Index"].astype(int)
 
     return all_test_set
+
 
 def test_single_house(
     row: pd.Series,
@@ -251,6 +248,8 @@ def logreg_predict(test_set_file: str) -> None:
         save_to_file
     )
 
+def main() -> None:
+    """Run the logistic regression prediction program.
 
 def main() -> None:
     """Run the logistic regression prediction program.
