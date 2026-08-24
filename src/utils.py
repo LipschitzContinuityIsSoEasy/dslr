@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-"""Utility files to export data validation and name shortening.
+"""Shared helpers for data validation and display formatting.
+
+Exports validate_data to load and check the Hogwarts dataset,
+short_name to abbreviate long course names, and the list of
+mandatory columns every dataset must contain.
 """
 
 import pandas as pd

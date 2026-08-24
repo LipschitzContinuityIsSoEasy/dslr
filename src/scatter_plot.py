@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
-"""Displays a scatter plot answering the following question:
+"""Scatter plot of the two most correlated courses.
 
-    What are the two features that are similar?
+Answers the question: what are the two features that are similar?
+Computes the full correlation matrix, finds the pair with the
+highest Pearson coefficient, and draws them against each other
+with one colour per Hogwarts house.
 """
 
 import sys

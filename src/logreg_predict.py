@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
-"""Generates the prediction file to evaluate the performance of classifier.
+"""Prediction program for the Sorting Hat classifier.
+
+Loads the trained model parameters from a JSON file, normalises
+the test dataset with the same means and standard deviations used
+during training, and predicts every student's Hogwarts house by
+picking the class with the highest sigmoid probability.  Results
+are written to a CSV file.
 """
 
 import sys

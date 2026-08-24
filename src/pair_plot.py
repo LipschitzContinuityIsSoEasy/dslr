@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-"""Displays a pair plot answering the following question:
+"""Pair plot of every course, coloured by Hogwarts house.
 
-    From this visualization, which features are you going
-        to use for your logistic regression?
+Answers the question: from this visualisation, which features
+are you going to use for your logistic regression?  Draws a
+zoomable pair plot with KDE diagonals and ranks the courses by
+ANOVA F-score to highlight the most discriminating ones.
 """
 
 import sys
