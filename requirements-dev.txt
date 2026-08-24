@@ -1,2 +1,6 @@
 flake8==7.3.0
 pydocstyle==6.3.0
+pandas
+matplotlib
+seaborn
+scikit-learn

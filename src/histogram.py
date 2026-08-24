@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
-"""Displays a histogram answering the following question:
+"""Histogram grid of every course, ordered by homogeneity.
 
-    Which Hogwarts course has a homogeneous score distribution
-        between all four houses?
+Answers the question: which Hogwarts course has a homogeneous
+score distribution between all four houses?  Each course is
+standardised, grouped by house, and ranked by the standard
+deviation of house means.  The most homogeneous course appears
+first.
 """
 
 import sys

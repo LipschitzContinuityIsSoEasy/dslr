@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-"""Performs Data Analysis on the features present in the datasets.
+"""Descriptive statistics for every numeric column of a dataset.
+
+Reads a CSV file, keeps only its numeric columns, and prints an
+aligned table of count, mean, standard deviation, quartiles, range,
+interquartile range, and skewness.
 """
 
 import sys

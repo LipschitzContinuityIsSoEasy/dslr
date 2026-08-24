@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
-"""Trains the model using log regression.
+"""One-vs-All logistic regression trainer for the Sorting Hat.
+
+Loads the Hogwarts dataset, selects the ten most discriminating
+courses with ANOVA F-scores, normalises them with Z-scores, and
+trains four binary classifiers (one per house) using gradient
+descent.  The trained weights, biases, means, and standard
+deviations are saved to a JSON file for logreg_predict.
 """
 
 import sys
@@ -458,8 +464,10 @@ def save_all_to_json(all_model_data: dict, filename_json: str) -> None:
 
 
 def train_all_houses(pipeline_data: dict, view: dict = None) -> None:
-    """Train One-vs-All (OvR) binary classifiers for all 4 Hogwarts houses
-    and save the combined model parameters to a JSON file.
+    """Train One-vs-All binary classifiers for all four Hogwarts houses.
+
+    Trains one model per house and saves the combined parameters
+    to a JSON file.
 
     Args:
         pipeline_data: Dictionary containing the training data and parameters.
