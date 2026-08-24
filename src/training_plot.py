@@ -23,10 +23,10 @@ from utils import short_name
 
 
 HOUSE_COLORS = {
-    "Gryffindor": "#AE0001",
-    "Slytherin": "#2A623D",
-    "Ravenclaw": "#222F5B",
-    "Hufflepuff": "#ECB939",
+    "Gryffindor": "#EE1212",
+    "Slytherin": "#39C367",
+    "Ravenclaw": "#4162CE",
+    "Hufflepuff": "#D8AC3B",
 }
 
 LIVE_BACKENDS = ("qt", "tk", "macosx", "gtk", "wx", "nbagg")

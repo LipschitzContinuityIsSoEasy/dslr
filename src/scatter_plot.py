@@ -65,8 +65,7 @@ def most_similar(
 
     corr_matrix = numeric_data.corr()
 
-    # aplatir la matrice et sort
-    stacked_corr = corr_matrix.stack().sort_values(ascending=False)
+    stacked_corr = corr_matrix.stack()
 
     # enlever les paires d'un cours avec lui meme, elles valent 1
     filtered_corr = stacked_corr[
@@ -74,12 +73,8 @@ def most_similar(
         != stacked_corr.index.get_level_values(1)
     ]
 
-    # print(" --- les premiers 4 corr--- ")
-    # print(filtered_corr.head(4))
-
-    best_pair = filtered_corr.index[0]
+    best_pair = filtered_corr.abs().idxmax()
     course1, course2 = best_pair
-
     print(f"Les deux cours sont: {course1} et {course2}")
 
     return course1, course2
