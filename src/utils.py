@@ -3,11 +3,20 @@
 """Shared helpers for data validation and display formatting.
 
 Exports validate_data to load and check the Hogwarts dataset,
-short_name to abbreviate long course names, and the list of
-mandatory columns every dataset must contain.
+short_name to abbreviate long course names, the project-wide house
+colours, and the list of mandatory columns every dataset must contain.
 """
 
 import pandas as pd
+
+HOUSE_COLORS = {
+    "Gryffindor": "#EE1212",
+    "Hufflepuff": "#D8AC3B",
+    "Ravenclaw": "#4162CE",
+    "Slytherin": "#39C367",
+}
+
+HOUSE_ORDER = ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"]
 
 MANDATORY_COLUMNS = [
     "Index",

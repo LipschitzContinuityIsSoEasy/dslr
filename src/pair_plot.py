@@ -13,7 +13,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utils import validate_data, MANDATORY_COLUMNS, short_name
+from utils import (
+    validate_data, MANDATORY_COLUMNS, short_name,
+    HOUSE_COLORS, HOUSE_ORDER,
+)
 from sklearn.feature_selection import f_classif
 
 
@@ -73,8 +76,9 @@ def show_pair_plot(
     grid = sns.pairplot(
         plot_data,
         hue="Hogwarts House",
+        hue_order=HOUSE_ORDER,
         diag_kind="kde",
-        palette="Set2",
+        palette=HOUSE_COLORS,
         height=0.9
     )
 

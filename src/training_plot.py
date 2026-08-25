@@ -19,15 +19,7 @@ two functions do nothing, so training runs at full speed.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import short_name
-
-
-HOUSE_COLORS = {
-    "Gryffindor": "#EE1212",
-    "Slytherin": "#39C367",
-    "Ravenclaw": "#4162CE",
-    "Hufflepuff": "#D8AC3B",
-}
+from utils import short_name, HOUSE_COLORS
 
 LIVE_BACKENDS = ("qt", "tk", "macosx", "gtk", "wx", "nbagg")
 

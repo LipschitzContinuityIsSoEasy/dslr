@@ -13,7 +13,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utils import validate_data, MANDATORY_COLUMNS
+from utils import validate_data, MANDATORY_COLUMNS, HOUSE_COLORS, HOUSE_ORDER
 
 
 def scatter_plot(file_name: str) -> None:
@@ -104,6 +104,8 @@ def show_scatter(
         x=course1,
         y=course2,
         hue="Hogwarts House",
+        hue_order=HOUSE_ORDER,
+        palette=HOUSE_COLORS,
         alpha=0.7
     )
 
