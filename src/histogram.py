@@ -14,7 +14,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from utils import validate_data, MANDATORY_COLUMNS
+from utils import validate_data, MANDATORY_COLUMNS, HOUSE_COLORS, HOUSE_ORDER
 from matplotlib.patches import Patch
 
 
@@ -39,7 +39,7 @@ def histogram(file_name: str) -> None:
     spread = most_homogeneous(all_data, course_cols)
 
     # show sorted courses on one grid
-    show_grid(all_data, course_cols, spread)
+    show_grid(all_data, spread)
 
 
 def most_homogeneous(
@@ -74,23 +74,20 @@ def most_homogeneous(
 
 def show_grid(
     all_data: pd.DataFrame,
-    course_cols: list[str],
     spread: pd.Series
 ) -> None:
     """Show a grid of courses ordered by homogeneity.
 
     Args:
         all_data: Dataset containing course results and Hogwarts houses.
-        course_cols: Course columns to display.
         spread: Standard deviation for each course.
 
     Returns:
         None.
     """
-    # get each house
-    houses = sorted(all_data["Hogwarts House"].dropna().unique())
-    # create colors for each house
-    palette = sns.color_palette(n_colors=len(houses))
+    # use the project-wide house order and colours
+    houses = HOUSE_ORDER
+    palette = [HOUSE_COLORS[h] for h in houses]
 
     # get presorted courses
     ordered_courses = list(spread.index)

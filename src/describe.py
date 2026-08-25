@@ -287,34 +287,6 @@ def display_statistics(stats_result: dict[str, dict[str, float]]) -> None:
     Returns:
         None.
     """
-    # print(f"DEBUG: 我手里一共存了 {len(stats_result)} 个特征的统计信息")
-    # # 打印所有特征的名字（大字典的键）
-    # print("所有的 Feature 名字有：", list(stats_result.keys()))
-
-    # first_feature_stats = list(stats_result.values())[0]
-    # print(f"DEBUG: 它们的统计项包括: {list(first_feature_stats.keys())}")
-
-    # first_cle = next(iter(stats_result))
-    # print(f"第一个键是: {first_cle}")
-    # print(f"它里面的内容是: {stats_result[first_cle]}")
-
-    # pas besoin ... ========================================================
-    # ouvrir un json
-    # save_in_file = "model_params.json"
-    # three_dimention_dict = {
-    #     "statistics": stats_result
-    # }
-
-    # try:
-    #     with open(save_in_file, "w") as datafile:
-    #         json.dump(three_dimention_dict, datafile, indent=4)
-    # except PermissionError:
-    #     print(f"Erreur : Le fichier '{save_in_file}' permission denied")
-    #     exit(1)
-    # except Exception as e:
-    #     print(f"Erreur lors de l'enregistrement du fichier JSON : {e}")
-    #     exit(1)
-
     # 1. stocker tous les features(les clefs de cleaned_dict == stats_result)
     # comme `Arithmancy`, `Astronomy` ...
     features = list(stats_result.keys())
@@ -380,11 +352,8 @@ def main() -> None:
     Returns:
         None.
     """
-    # etape: 1. creer un dictionaire
-    # {"colon1": [chiffre_1, chiffre_2], ..., "colon2":[chiffre1, ...], ...}
     args = sys.argv
 
-    #  ??trop tard?
     if len(args) < 2:
         print("Usage: ./describe.py <dataset.csv>")
         exit(1)
