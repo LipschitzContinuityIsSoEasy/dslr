@@ -40,7 +40,7 @@ def pair_plot(file_name: str) -> None:
     show_pair_plot(all_data, course_cols)
 
     # 4. rank courses by F score
-    rank_courses(all_data, course_cols)
+    select_best_features(all_data, course_cols)
 
 
 def show_pair_plot(
@@ -66,8 +66,8 @@ def show_pair_plot(
     })
 
     print(
-        "Génération du pair plot en cours "
-        "(cela peut prendre quelques secondes)..."
+        "Generating pair plot "
+        "(this may take a few seconds)...\n"
     )
 
     grid = sns.pairplot(
@@ -192,18 +192,18 @@ def show_zoomable(figure: plt.Figure) -> None:
     figure.canvas.mpl_connect("button_release_event", on_release)
 
 
-def rank_courses(
+def select_best_features(
     all_data: pd.DataFrame,
     course_cols: list[str]
-) -> None:
-    """Rank the courses by their ability to separate the houses.
+) -> list[str]:
+    """Select the ten course features with the highest F-scores.
 
     Args:
-        all_data: Dataset containing course results and Hogwarts houses.
-        course_cols: Course columns to rank.
+        data: Dataset containing the course values and house labels.
+        course_cols: List of course column names.
 
     Returns:
-        None.
+        List of the ten best course features.
     """
     # pour f-score
     clean_data = all_data[course_cols + ['Hogwarts House']].dropna()
@@ -222,9 +222,9 @@ def rank_courses(
     }).sort_values(by='F_Value', ascending=False).reset_index(drop=True)
 
     print(
-        "--- Classement des cours selon leur capacité à différencier les "
-        "maisons (plus le F-score est élevé, meilleur est le résultat de "
-        "classification) ---"
+        "--- Course ranking by ability to differentiate houses ---\n"
+        "(The higher the F-score, "
+        "the better the classification performance.)\n"
     )
     print(feature_ranking.to_string(index=False))
 
@@ -232,12 +232,15 @@ def rank_courses(
     # avec le F-score le plus élevé pour les utiliser dans la régression
     # logistique
     top_k = 10
+
     best_features = feature_ranking['Feature'].head(top_k).tolist()
     print(
-        f"\nCaractéristiques recommandées pour la régression logistique "
+        f"\nRecommended features for logistic regression "
         f"(top {top_k}) :"
     )
     print(best_features)
+
+    return best_features
 
 
 def main() -> None:

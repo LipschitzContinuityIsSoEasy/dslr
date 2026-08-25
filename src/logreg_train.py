@@ -15,8 +15,8 @@ import math
 import json
 import training_plot
 
-from sklearn.feature_selection import f_classif
 from utils import validate_data, MANDATORY_COLUMNS
+from pair_plot import select_best_features
 
 
 def calculate_mean(values: pd.Series) -> float:
@@ -54,60 +54,6 @@ def fill_missing_values(
         data[col] = data[col].fillna(mean_val)
 
     return data, raw_means
-
-
-def select_best_features(
-    data: pd.DataFrame,
-    course_cols: list[str]
-) -> list[str]:
-    """Select the ten course features with the highest F-scores.
-
-    Args:
-        data: Dataset containing the course values and house labels.
-        course_cols: List of course column names.
-
-    Returns:
-        List of the ten best course features.
-    """
-    clean_data = data[
-        course_cols + ["Hogwarts House"]
-    ].dropna(subset=["Hogwarts House"])
-
-    X = clean_data[course_cols]
-
-    y = clean_data["Hogwarts House"]
-
-    f_values, p_values = f_classif(X, y)
-
-    feature_ranking = pd.DataFrame({
-        "Feature": course_cols,
-        "F_Value": f_values,
-        "P_Value": p_values
-    }).sort_values(
-        by="F_Value",
-        ascending=False
-    ).reset_index(drop=True)
-
-    print(
-        "--- Course ranking by ability to differentiate houses ---"
-    )
-    print(feature_ranking.to_string(index=False))
-
-    top_k = 10
-
-    best_features = (
-        feature_ranking["Feature"]
-        .head(top_k)
-        .tolist()
-    )
-
-    print(
-        f"\nRecommended features for logistic regression "
-        f"(top {top_k}):"
-    )
-    print(best_features)
-
-    return best_features
 
 
 def load_and_preprocess_data(
